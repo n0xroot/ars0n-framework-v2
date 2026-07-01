@@ -3,7 +3,7 @@ services:
     container_name: bb-nginx-1
     build: ./nginx
     ports:
-      - "8081:8081"
+      - "5081:5081"
     depends_on:
       - api
       - client
