@@ -3,7 +3,7 @@ services:
     container_name: bb-nginx-1
     build: ./nginx
     ports:
-      - "8081:80"
+      - "8081:8081"
     depends_on:
       - api
       - client
@@ -93,7 +93,7 @@ services:
       - "3001:3001"
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/ars0n
-      MCP_PORT: "3001"
+      MCP_PORT: "2001"
       API_URL: http://api:8443
     restart: unless-stopped
     networks:
