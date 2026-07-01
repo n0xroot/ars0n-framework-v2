@@ -1,9 +1,9 @@
 services:
   nginx:
-    container_name: ars0n-framework-v2-nginx-1
+    container_name: bb-nginx-1
     build: ./nginx
     ports:
-      - "80:80"
+      - "8081:8081"
     depends_on:
       - api
       - client
