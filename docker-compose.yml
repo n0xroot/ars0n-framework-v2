@@ -90,7 +90,7 @@ services:
       api:
         condition: service_started
     ports:
-      - "3001:3001"
+      - "2001:2001"
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/ars0n
       MCP_PORT: "2001"
