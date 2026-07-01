@@ -1,9 +1,19 @@
 services:
+  nginx:
+    container_name: ars0n-framework-v2-nginx-1
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+      - client
+    restart: unless-stopped
+    networks:
+      - ars0n-network
+
   api:
     container_name: bb-api-1
     build: ./server
-    ports:
-      - "8443:8443"
     depends_on:
       db:
         condition: service_healthy
@@ -17,6 +27,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - temp_data:/tmp
+      - ./wordlists:/app/wordlists
     dns:
       - 127.0.0.11
       - 8.8.8.8
@@ -64,10 +75,26 @@ services:
   client:
     container_name: bb-client-1
     build: ./client
-    ports:
-      - "3000:3000"
     depends_on:
       - api
+    restart: unless-stopped
+    networks:
+      - ars0n-network
+
+  mcp-server:
+    container_name: ars0n-framework-v2-mcp-server-1
+    build: ./docker/mcp-server
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/ars0n
+      MCP_PORT: "3001"
+      API_URL: http://api:8443
     restart: unless-stopped
     networks:
       - ars0n-network
@@ -227,7 +254,8 @@ services:
     depends_on:
       - api
     volumes:
-      - ./wordlists:/wordlists
+      - ./wordlists:/app/wordlists
+      - temp_data:/tmp
     entrypoint: ["sleep", "infinity"]
     restart: "no"
     networks:
@@ -270,6 +298,42 @@ services:
     build: ./docker/waybackurls
     depends_on:
       - api
+    entrypoint: ["sleep", "infinity"]
+    restart: "no"
+    networks:
+      - ars0n-network
+
+  arjun:
+    container_name: ars0n-framework-v2-arjun-1
+    build: ./docker/arjun
+    depends_on:
+      - api
+    volumes:
+      - temp_data:/tmp
+    entrypoint: ["sleep", "infinity"]
+    restart: "no"
+    networks:
+      - ars0n-network
+
+  parameth:
+    container_name: ars0n-framework-v2-parameth-1
+    build: ./docker/parameth
+    depends_on:
+      - api
+    volumes:
+      - temp_data:/tmp
+    entrypoint: ["sleep", "infinity"]
+    restart: "no"
+    networks:
+      - ars0n-network
+
+  x8:
+    container_name: ars0n-framework-v2-x8-1
+    build: ./docker/x8
+    depends_on:
+      - api
+    volumes:
+      - temp_data:/tmp
     entrypoint: ["sleep", "infinity"]
     restart: "no"
     networks:

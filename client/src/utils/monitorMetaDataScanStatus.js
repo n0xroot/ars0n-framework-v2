@@ -9,7 +9,7 @@ const monitorMetaDataScanStatus = async (
 
   try {
     const response = await fetch(
-      `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/metadata`
+      `/api/scopetarget/${activeTarget.id}/scans/metadata`
     );
 
     if (!response.ok) {
@@ -22,9 +22,28 @@ const monitorMetaDataScanStatus = async (
     if (scans && scans.length > 0) {
       const mostRecentScan = scans[0];
       setMostRecentMetaDataScan(mostRecentScan);
-      setMostRecentMetaDataScanStatus(mostRecentScan.status);
 
-      if (mostRecentScan.status === 'pending' || mostRecentScan.status === 'running') {
+      console.log('[DEBUG monitorMetaDataScanStatus] Current scan status:', mostRecentScan.status);
+      console.log('[DEBUG monitorMetaDataScanStatus] Cancel requested:', mostRecentScan.cancel_requested);
+
+      if (mostRecentScan.status === 'cancelled' || mostRecentScan.status === 'success' || mostRecentScan.status === 'failed' || mostRecentScan.status === 'error') {
+        console.log('[DEBUG monitorMetaDataScanStatus] Scan completed with final status:', mostRecentScan.status);
+        setMostRecentMetaDataScanStatus(mostRecentScan.status);
+        setIsMetaDataScanning(false);
+      } else if (mostRecentScan.cancel_requested && (mostRecentScan.status === 'pending' || mostRecentScan.status === 'running')) {
+        console.log('[DEBUG monitorMetaDataScanStatus] Cancellation in progress, showing cancelling state...');
+        setMostRecentMetaDataScanStatus('cancelling');
+        setTimeout(() => {
+          monitorMetaDataScanStatus(
+            activeTarget,
+            setMetaDataScans,
+            setMostRecentMetaDataScan,
+            setIsMetaDataScanning,
+            setMostRecentMetaDataScanStatus
+          );
+        }, 2000);
+      } else if (mostRecentScan.status === 'pending' || mostRecentScan.status === 'running') {
+        setMostRecentMetaDataScanStatus(mostRecentScan.status);
         setTimeout(() => {
           monitorMetaDataScanStatus(
             activeTarget,
@@ -35,11 +54,13 @@ const monitorMetaDataScanStatus = async (
           );
         }, 5000);
       } else {
+        console.log('[DEBUG monitorMetaDataScanStatus] Unexpected status:', mostRecentScan.status);
+        setMostRecentMetaDataScanStatus(mostRecentScan.status);
         setIsMetaDataScanning(false);
         // Fetch updated target URLs when scan completes
         try {
           const urlsResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/scope-targets/${activeTarget.id}/target-urls`
+            `/api/api/scope-targets/${activeTarget.id}/target-urls`
           );
           if (!urlsResponse.ok) {
             throw new Error('Failed to fetch target URLs');
@@ -69,7 +90,7 @@ const monitorCompanyMetaDataScanStatus = async (
 
   try {
     const response = await fetch(
-      `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/ip-port-scan/${ipPortScanId}/metadata-scans`
+      `/api/ip-port-scan/${ipPortScanId}/metadata-scans`
     );
 
     if (!response.ok) {
@@ -100,7 +121,7 @@ const monitorCompanyMetaDataScanStatus = async (
         // Fetch updated metadata results when scan completes
         try {
           const metadataResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/ip-port-scan/${ipPortScanId}/metadata-results`
+            `/api/ip-port-scan/${ipPortScanId}/metadata-results`
           );
           if (!metadataResponse.ok) {
             throw new Error('Failed to fetch metadata results');

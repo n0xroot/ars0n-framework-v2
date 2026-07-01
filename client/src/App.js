@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import AddScopeTargetModal from './modals/addScopeTargetModal.js';
 import SelectActiveScopeTargetModal from './modals/selectActiveScopeTargetModal.js';
 import { DNSRecordsModal, SubdomainsModal, CloudDomainsModal, InfrastructureMapModal } from './modals/amassModals.js';
@@ -28,6 +28,9 @@ import {
   Toast,
   ToastContainer,
   Spinner,
+  ProgressBar,
+  Alert,
+  Badge,
 } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -84,7 +87,7 @@ import initiateNucleiScan from './utils/initiateNucleiScan';
 import monitorNucleiScanStatus from './utils/monitorNucleiScanStatus';
 import initiateNucleiScreenshotScan from './utils/initiateNucleiScreenshotScan';
 import monitorNucleiScreenshotScanStatus from './utils/monitorNucleiScreenshotScanStatus';
-import initiateMetaDataScan, { initiateCompanyMetaDataScan } from './utils/initiateMetaDataScan';
+import initiateMetaDataScan, { initiateCompanyMetaDataScan, cancelMetaDataScan } from './utils/initiateMetaDataScan';
 import monitorMetaDataScanStatus, { monitorCompanyMetaDataScanStatus } from './utils/monitorMetaDataScanStatus';
 import fetchHttpxScans from './utils/fetchHttpxScans';
 import {
@@ -122,12 +125,14 @@ import monitorShodanCompanyScanStatus from './utils/monitorShodanCompanyScanStat
 import initiateShodanCompanyScan from './utils/initiateShodanCompanyScan';
 import AddWildcardTargetsModal from './modals/AddWildcardTargetsModal.js';
 import ExploreAttackSurfaceModal from './modals/ExploreAttackSurfaceModal.js';
+import GlobalScansModal from './modals/GlobalScansModal.js';
 import initiateInvestigateScan from './utils/initiateInvestigateScan';
 import monitorInvestigateScanStatus from './utils/monitorInvestigateScanStatus';
 import TrimRootDomainsModal from './modals/TrimRootDomainsModal.js';
 import TrimNetworkRangesModal from './modals/TrimNetworkRangesModal.js';
 import LiveWebServersResultsModal from './modals/LiveWebServersResultsModal.js';
 import AmassEnumConfigModal from './modals/AmassEnumConfigModal.js';
+import ConfigureHttpxModal from './modals/ConfigureHttpxModal.js';
 import AmassIntelConfigModal from './modals/AmassIntelConfigModal.js';
 import DNSxConfigModal from './modals/DNSxConfigModal.js';
 import fetchMetabigorCompanyScans from './utils/fetchMetabigorCompanyScans';
@@ -158,6 +163,7 @@ import monitorCloudEnumScanStatus from './utils/monitorCloudEnumScanStatus';
 
 // Add Attack Surface Visualization import
 import AttackSurfaceVisualizationModal from './modals/AttackSurfaceVisualizationModal.js';
+import ManageAttackSurfaceModal from './modals/ManageAttackSurfaceModal.js';
 
 // Add URL workflow imports
 import initiateKatanaURLScan from './utils/initiateKatanaURLScan';
@@ -168,27 +174,47 @@ import initiateWaybackURLsScan from './utils/initiateWaybackURLsScan';
 import monitorWaybackURLsScanStatus from './utils/monitorWaybackURLsScanStatus';
 import initiateGAUURLScan from './utils/initiateGAUURLScan';
 import monitorGAUURLScanStatus from './utils/monitorGAUURLScanStatus';
+import initiateGoSpiderURLScan from './utils/initiateGoSpiderURLScan';
+import monitorGoSpiderURLScanStatus from './utils/monitorGoSpiderURLScanStatus';
 import initiateFFUFURLScan from './utils/initiateFFUFURLScan';
 import monitorFFUFURLScanStatus from './utils/monitorFFUFURLScanStatus';
 import { KatanaURLResultsModal } from './modals/KatanaURLResultsModal';
 import { LinkFinderURLResultsModal } from './modals/LinkFinderURLResultsModal';
 import { WaybackURLsResultsModal } from './modals/WaybackURLsResultsModal';
 import { GAUURLResultsModal } from './modals/GAUURLResultsModal';
+import { GoSpiderURLResultsModal } from './modals/GoSpiderURLResultsModal';
 import { FFUFURLResultsModal } from './modals/FFUFURLResultsModal';
+import initiateArjunScan from './utils/initiateArjunScan';
+import monitorArjunScanStatus from './utils/monitorArjunScanStatus';
+import initiateParamethScan from './utils/initiateParamethScan';
+import monitorParamethScanStatus from './utils/monitorParamethScanStatus';
+import initiateX8Scan from './utils/initiateX8Scan';
+import monitorX8ScanStatus from './utils/monitorX8ScanStatus';
+import { ArjunConfigModal } from './modals/ArjunConfigModal';
+import { ArjunResultsModal } from './modals/ArjunResultsModal';
+import { ParamethConfigModal } from './modals/ParamethConfigModal';
+import { ParamethResultsModal } from './modals/ParamethResultsModal';
+import { X8ConfigModal } from './modals/X8ConfigModal';
+import { X8ResultsModal } from './modals/X8ResultsModal';
 import { ApplicationQuestionsModal } from './modals/ApplicationQuestionsModal';
 import { MechanismsModal } from './modals/MechanismsModal';
 import { NotableObjectsModal } from './modals/NotableObjectsModal';
 import { SecurityControlsModal } from './modals/SecurityControlsModal';
 import { ThreatModelModal } from './modals/ThreatModelModal';
 import { FFUFConfigModal } from './modals/FFUFConfigModal';
+import ManualCrawlResultsModal from './modals/ManualCrawlResultsModal';
+import ExtensionInstallModal from './modals/ExtensionInstallModal';
+import ManageEndpointsModal from './modals/ManageEndpointsModal';
 
 const ExportModal = lazy(() => import('./modals/ExportModal.js'));
 const ImportModal = lazy(() => import('./modals/ImportModal.js'));
 const WelcomeModal = lazy(() => import('./modals/WelcomeModal.js'));
+const LaunchPadModal = lazy(() => import('./modals/LaunchPadModal.js'));
 const ConfigUploadModal = lazy(() => import('./modals/ConfigUploadModal.js'));
 const APIIntegrationModal = lazy(() => import('./modals/APIIntegrationModal.js'));
 const GoogleDorkingModal = lazy(() => import('./modals/GoogleDorkingModal.js'));
 const MetaDataModal = lazy(() => import('./modals/MetaDataModal.js'));
+const ConfigureMetaDataModal = lazy(() => import('./modals/ConfigureMetaDataModal.js'));
 const ROIReport = lazy(() => import('./components/ROIReport'));
 const HelpMeLearnLazy = lazy(() => import('./components/HelpMeLearn'));
 
@@ -368,6 +394,7 @@ function App() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showLaunchPadModal, setShowLaunchPadModal] = useState(false);
   const [showConfigUploadModal, setShowConfigUploadModal] = useState(false);
   const [showAPIIntegrationModal, setShowAPIIntegrationModal] = useState(false);
   const [selections, setSelections] = useState({
@@ -419,6 +446,7 @@ function App() {
   const [isAssetfinderScanning, setIsAssetfinderScanning] = useState(false);
   const [showAssetfinderResultsModal, setShowAssetfinderResultsModal] = useState(false);
   const [showCTLResultsModal, setShowCTLResultsModal] = useState(false);
+  const [showCTLApiErrorModal, setShowCTLApiErrorModal] = useState(false);
   const [ctlScans, setCTLScans] = useState([]);
   const [isCTLScanning, setIsCTLScanning] = useState(false);
   const [mostRecentCTLScan, setMostRecentCTLScan] = useState(null);
@@ -453,6 +481,8 @@ function App() {
   const [attackSurfaceCloudAssetsCount, setAttackSurfaceCloudAssetsCount] = useState(0);
   const [attackSurfaceFQDNsCount, setAttackSurfaceFQDNsCount] = useState(0);
   const [showUniqueSubdomainsModal, setShowUniqueSubdomainsModal] = useState(false);
+  const [showConfigureHttpxModal, setShowConfigureHttpxModal] = useState(false);
+  const [httpxScanConfig, setHttpxScanConfig] = useState(null);
   const [mostRecentCeWLScanStatus, setMostRecentCeWLScanStatus] = useState(null);
   const [mostRecentCeWLScan, setMostRecentCeWLScan] = useState(null);
   const [isCeWLScanning, setIsCeWLScanning] = useState(false);
@@ -479,12 +509,16 @@ function App() {
   const [mostRecentInvestigateScanStatus, setMostRecentInvestigateScanStatus] = useState(null);
   const [mostRecentInvestigateScan, setMostRecentInvestigateScan] = useState(null);
   const [isInvestigateScanning, setIsInvestigateScanning] = useState(false);
+  const [isInvestigatingEndpoints, setIsInvestigatingEndpoints] = useState(false);
+  const [endpointInvestigationResults, setEndpointInvestigationResults] = useState(null);
   const [targetURLs, setTargetURLs] = useState([]);
   const [showROIReport, setShowROIReport] = useState(false);
   const [selectedTargetURL, setSelectedTargetURL] = useState(null);
   const [shuffleDNSCustomScans, setShuffleDNSCustomScans] = useState([]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showToolsModal, setShowToolsModal] = useState(false);
+  const [toolsModalInitialUrls, setToolsModalInitialUrls] = useState('');
+  const [toolsModalInitialTab, setToolsModalInitialTab] = useState('url-populator');
   const [isAutoScanning, setIsAutoScanning] = useState(false);
   const [autoScanCurrentStep, setAutoScanCurrentStep] = useState(AUTO_SCAN_STEPS.IDLE);
   const [autoScanTargetId, setAutoScanTargetId] = useState(null);
@@ -495,6 +529,22 @@ function App() {
   const [isAutoScanPaused, setIsAutoScanPaused] = useState(false);
   const [isAutoScanPausing, setIsAutoScanPausing] = useState(false);
   const [isAutoScanCancelling, setIsAutoScanCancelling] = useState(false);
+
+  const [showGlobalScansModal, setShowGlobalScansModal] = useState(false);
+  const [isWildfireRunning, setIsWildfireRunning] = useState(false);
+  const [, setWildfireCancelled] = useState(false);
+  const [wildfireProgress, setWildfireProgress] = useState(null);
+  const wildfireCancelledRef = useRef(false);
+
+  // Slowburn state
+  const [isSlowburnRunning, setIsSlowburnRunning] = useState(false);
+  const [slowburnProgress, setSlowburnProgress] = useState(null);
+  const slowburnCancelledRef = useRef(false);
+  const activeTargetRef = useRef(null);
+  const httpxScanConfigRef = useRef(null);
+  activeTargetRef.current = activeTarget;
+  httpxScanConfigRef.current = httpxScanConfig;
+
   const [ctlCompanyScans, setCTLCompanyScans] = useState([]);
   const [mostRecentCTLCompanyScanStatus, setMostRecentCTLCompanyScanStatus] = useState(null);
   const [mostRecentCTLCompanyScan, setMostRecentCTLCompanyScan] = useState(null);
@@ -581,6 +631,8 @@ function App() {
   const [mostRecentMetaDataScan, setMostRecentMetaDataScan] = useState(null);
   const [isMetaDataScanning, setIsMetaDataScanning] = useState(false);
   const [showMetaDataModal, setShowMetaDataModal] = useState(false);
+  const [showConfigureMetaDataModal, setShowConfigureMetaDataModal] = useState(false);
+  const [metaDataScanConfigs, setMetaDataScanConfigs] = useState({});
   const [companyMetaDataScans, setCompanyMetaDataScans] = useState([]);
   const [mostRecentCompanyMetaDataScanStatus, setMostRecentCompanyMetaDataScanStatus] = useState(null);
   const [mostRecentCompanyMetaDataScan, setMostRecentCompanyMetaDataScan] = useState(null);
@@ -617,6 +669,16 @@ function App() {
   const [showNucleiHistoryModal, setShowNucleiHistoryModal] = useState(false);
   const [activeNucleiScan, setActiveNucleiScan] = useState(null);
 
+  const [showWildcardNucleiConfigModal, setShowWildcardNucleiConfigModal] = useState(false);
+  const [wildcardNucleiScans, setWildcardNucleiScans] = useState([]);
+  const [mostRecentWildcardNucleiScan, setMostRecentWildcardNucleiScan] = useState(null);
+  const [mostRecentWildcardNucleiScanStatus, setMostRecentWildcardNucleiScanStatus] = useState(null);
+  const [isWildcardNucleiScanning, setIsWildcardNucleiScanning] = useState(false);
+  const [wildcardNucleiConfig, setWildcardNucleiConfig] = useState(null);
+  const [showWildcardNucleiResultsModal, setShowWildcardNucleiResultsModal] = useState(false);
+  const [showWildcardNucleiHistoryModal, setShowWildcardNucleiHistoryModal] = useState(false);
+  const [activeWildcardNucleiScan, setActiveWildcardNucleiScan] = useState(null);
+
   // Katana Company state variables
   const [katanaCompanyScans, setKatanaCompanyScans] = useState([]);
   const [mostRecentKatanaCompanyScanStatus, setMostRecentKatanaCompanyScanStatus] = useState(null);
@@ -627,6 +689,7 @@ function App() {
   const [showKatanaCompanyConfigModal, setShowKatanaCompanyConfigModal] = useState(false);
   const [showExploreAttackSurfaceModal, setShowExploreAttackSurfaceModal] = useState(false);
   const [showAttackSurfaceVisualizationModal, setShowAttackSurfaceVisualizationModal] = useState(false);
+  const [showManageAttackSurfaceModal, setShowManageAttackSurfaceModal] = useState(false);
   const [katanaCompanyCloudAssets, setKatanaCompanyCloudAssets] = useState([]);
   
   const [katanaURLScans, setKatanaURLScans] = useState([]);
@@ -649,22 +712,58 @@ function App() {
   const [mostRecentGAUURLScan, setMostRecentGAUURLScan] = useState(null);
   const [isGAUURLScanning, setIsGAUURLScanning] = useState(false);
   
+  const [goSpiderURLScans, setGoSpiderURLScans] = useState([]);
+  const [mostRecentGoSpiderURLScanStatus, setMostRecentGoSpiderURLScanStatus] = useState(null);
+  const [mostRecentGoSpiderURLScan, setMostRecentGoSpiderURLScan] = useState(null);
+  const [isGoSpiderURLScanning, setIsGoSpiderURLScanning] = useState(false);
+  
   const [ffufURLScans, setFFUFURLScans] = useState([]);
   const [mostRecentFFUFURLScanStatus, setMostRecentFFUFURLScanStatus] = useState(null);
   const [mostRecentFFUFURLScan, setMostRecentFFUFURLScan] = useState(null);
   const [isFFUFURLScanning, setIsFFUFURLScanning] = useState(false);
   
+  const [arjunScans, setArjunScans] = useState([]);
+  const [mostRecentArjunScanStatus, setMostRecentArjunScanStatus] = useState(null);
+  const [mostRecentArjunScan, setMostRecentArjunScan] = useState(null);
+  const [isArjunScanning, setIsArjunScanning] = useState(false);
+  
+  const [paramethScans, setParamethScans] = useState([]);
+  const [mostRecentParamethScanStatus, setMostRecentParamethScanStatus] = useState(null);
+  const [mostRecentParamethScan, setMostRecentParamethScan] = useState(null);
+  const [isParamethScanning, setIsParamethScanning] = useState(false);
+  
+  const [x8Scans, setX8Scans] = useState([]);
+  const [mostRecentX8ScanStatus, setMostRecentX8ScanStatus] = useState(null);
+  const [mostRecentX8Scan, setMostRecentX8Scan] = useState(null);
+  const [isX8Scanning, setIsX8Scanning] = useState(false);
+  
   const [showKatanaURLResultsModal, setShowKatanaURLResultsModal] = useState(false);
   const [showLinkFinderURLResultsModal, setShowLinkFinderURLResultsModal] = useState(false);
   const [showWaybackURLsResultsModal, setShowWaybackURLsResultsModal] = useState(false);
   const [showGAUURLResultsModal, setShowGAUURLResultsModal] = useState(false);
+  const [showGoSpiderURLResultsModal, setShowGoSpiderURLResultsModal] = useState(false);
   const [showFFUFURLResultsModal, setShowFFUFURLResultsModal] = useState(false);
+  
+  const [showArjunConfigModal, setShowArjunConfigModal] = useState(false);
+  const [showArjunResultsModal, setShowArjunResultsModal] = useState(false);
+  const [showParamethConfigModal, setShowParamethConfigModal] = useState(false);
+  const [showParamethResultsModal, setShowParamethResultsModal] = useState(false);
+  const [showX8ConfigModal, setShowX8ConfigModal] = useState(false);
+  const [showX8ResultsModal, setShowX8ResultsModal] = useState(false);
   const [showApplicationQuestionsModal, setShowApplicationQuestionsModal] = useState(false);
   const [showMechanismsModal, setShowMechanismsModal] = useState(false);
   const [showNotableObjectsModal, setShowNotableObjectsModal] = useState(false);
   const [showSecurityControlsModal, setShowSecurityControlsModal] = useState(false);
   const [showThreatModelModal, setShowThreatModelModal] = useState(false);
   const [showFFUFConfigModal, setShowFFUFConfigModal] = useState(false);
+  const [showManualCrawlResultsModal, setShowManualCrawlResultsModal] = useState(false);
+  const [showExtensionInstallModal, setShowExtensionInstallModal] = useState(false);
+  const [manualCrawlConnected, setManualCrawlConnected] = useState(false);
+  const [manualCrawlEndpointCount, setManualCrawlEndpointCount] = useState(0);
+  const [manualCrawlSessionCount, setManualCrawlSessionCount] = useState(0);
+  const [showManageEndpointsModal, setShowManageEndpointsModal] = useState(false);
+  const [consolidatedEndpointCount, setConsolidatedEndpointCount] = useState(0);
+  const [isConsolidatingEndpoints, setIsConsolidatingEndpoints] = useState(false);
   const [mechanismsForThreatModel, setMechanismsForThreatModel] = useState([]);
   const [notableObjectsForThreatModel, setNotableObjectsForThreatModel] = useState([]);
   const [securityControlsForThreatModel, setSecurityControlsForThreatModel] = useState([]);
@@ -673,8 +772,39 @@ function App() {
   const handleCloseCloudDomainsModal = () => setShowCloudDomainsModal(false);
   const handleCloseUniqueSubdomainsModal = () => setShowUniqueSubdomainsModal(false);
   const handleCloseMetaDataModal = () => setShowMetaDataModal(false);
+  
+  const handleOpenConfigureMetaDataModal = async () => {
+    setShowConfigureMetaDataModal(true);
+    
+    try {
+      const response = await fetch(
+        `/api/api/scope-targets/${activeTarget.id}/target-urls`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch target URLs');
+      }
+      const data = await response.json();
+      const safeData = data || [];
+      setTargetURLs(safeData);
+    } catch (error) {
+      console.error('Error fetching target URLs:', error);
+    }
+  };
+  
+  const handleCloseConfigureMetaDataModal = () => setShowConfigureMetaDataModal(false);
+  
+  const handleSaveMetaDataConfig = (config) => {
+    if (!activeTarget) return;
+    setMetaDataScanConfigs(prev => ({
+      ...prev,
+      [activeTarget.id]: config
+    }));
+  };
+  
   const handleCloseToolsModal = () => {
     setShowToolsModal(false);
+    setToolsModalInitialUrls('');
+    setToolsModalInitialTab('url-populator');
   };
 
   const handleCloseSettingsModal = () => {
@@ -682,7 +812,7 @@ function App() {
     const checkApiKeys = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/api-keys`
+          `/api/api/api-keys`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch API keys');
@@ -799,7 +929,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-config/${activeTarget.id}`
+        `/api/amass-enum-config/${activeTarget.id}`
       );
       
       if (response.ok) {
@@ -815,7 +945,7 @@ function App() {
           try {
             // Fetch all scope targets to find wildcard targets
             const scopeTargetsResponse = await fetch(
-              `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/read`
+              `/api/scopetarget/read`
             );
             
             if (scopeTargetsResponse.ok) {
@@ -840,7 +970,7 @@ function App() {
                 for (const wildcardTarget of wildcardTargets) {
                   try {
                     const liveWebServersResponse = await fetch(
-                      `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/scope-targets/${wildcardTarget.id}/target-urls`
+                      `/api/api/scope-targets/${wildcardTarget.id}/target-urls`
                     );
                     
                     if (liveWebServersResponse.ok) {
@@ -902,7 +1032,7 @@ function App() {
         try {
           // Fetch raw results count
           const rawResultsResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentAmassEnumCompanyScan.scan_id}/raw-results`
+            `/api/amass-enum-company/${mostRecentAmassEnumCompanyScan.scan_id}/raw-results`
           );
           if (rawResultsResponse.ok) {
             const rawResults = await rawResultsResponse.json();
@@ -913,7 +1043,7 @@ function App() {
 
           // Fetch cloud domains count
           const cloudDomainsResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentAmassEnumCompanyScan.scan_id}/cloud-domains`
+            `/api/amass-enum-company/${mostRecentAmassEnumCompanyScan.scan_id}/cloud-domains`
           );
           if (cloudDomainsResponse.ok) {
             const cloudDomains = await cloudDomainsResponse.json();
@@ -943,7 +1073,7 @@ function App() {
 
           // Fetch DNS records count
           const dnsRecordsResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/dnsx-company/${mostRecentDNSxCompanyScan.scan_id}/dns-records`
+            `/api/dnsx-company/${mostRecentDNSxCompanyScan.scan_id}/dns-records`
           );
           if (dnsRecordsResponse.ok) {
             const dnsRecords = await dnsRecordsResponse.json();
@@ -972,7 +1102,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-intel-config/${activeTarget.id}`
+        `/api/amass-intel-config/${activeTarget.id}`
       );
       
       if (response.ok) {
@@ -1094,13 +1224,56 @@ function App() {
     );
   };
 
+  const handleInvestigateEndpoints = async () => {
+    if (!activeTarget) return;
+    
+    setIsInvestigatingEndpoints(true);
+    try {
+      const response = await fetch(`/api/endpoint-investigation/${activeTarget.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const scanID = data.scan_id;
+        
+        const pollStatus = async () => {
+          const statusResp = await fetch(`/api/endpoint-investigation/${activeTarget.id}/status/${scanID}`);
+          if (statusResp.ok) {
+            const status = await statusResp.json();
+            
+            if (status.status === 'success') {
+              const resultsResp = await fetch(`/api/endpoint-investigation/${activeTarget.id}/results`);
+              if (resultsResp.ok) {
+                const results = await resultsResp.json();
+                setEndpointInvestigationResults(results);
+              }
+              setIsInvestigatingEndpoints(false);
+            } else if (status.status === 'error') {
+              console.error('Endpoint investigation failed:', status.error);
+              setIsInvestigatingEndpoints(false);
+            } else {
+              setTimeout(pollStatus, 2000);
+            }
+          }
+        };
+        
+        pollStatus();
+      }
+    } catch (err) {
+      console.error('Error investigating endpoints:', err);
+      setIsInvestigatingEndpoints(false);
+    }
+  };
+
   const handleValidateRootDomains = () => {
     console.log('Validate Root Domains clicked');
   };
 
   const handleAddWildcardTarget = async (domain) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/add`, {
+      const response = await fetch(`/api/scopetarget/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1159,6 +1332,15 @@ function App() {
     }
   }, [activeTarget?.id]); // Run when activeTarget.id changes (including initial load)
 
+  // Load consolidated endpoint count when activeTarget changes
+  useEffect(() => {
+    if (activeTarget) {
+      loadConsolidatedEndpointCount();
+    } else {
+      setConsolidatedEndpointCount(0);
+    }
+  }, [activeTarget?.id]);
+
   useEffect(() => {
     if (activeTarget) {
       fetchAmassScans(activeTarget, setAmassScans, setMostRecentAmassScan, setMostRecentAmassScanStatus, setDnsRecords, setSubdomains, setCloudDomains);
@@ -1176,6 +1358,9 @@ function App() {
       fetchReverseWhoisDomains();
       fetchIPPortScans(activeTarget, setIPPortScans, setMostRecentIPPortScan, setMostRecentIPPortScanStatus);
       fetchNucleiScans(activeTarget, setNucleiScans, setMostRecentNucleiScan, setMostRecentNucleiScanStatus, setActiveNucleiScan);
+      if (activeTarget.type === 'Wildcard') {
+        fetchNucleiScans(activeTarget, setWildcardNucleiScans, setMostRecentWildcardNucleiScan, setMostRecentWildcardNucleiScanStatus, setActiveWildcardNucleiScan);
+      }
     }
   }, [activeTarget]);
 
@@ -1293,6 +1478,42 @@ function App() {
   }, [activeTarget]);
 
   useEffect(() => {
+    if (activeTarget && activeTarget.type === 'URL') {
+      monitorArjunScanStatus(
+        activeTarget,
+        setArjunScans,
+        setMostRecentArjunScan,
+        setIsArjunScanning,
+        setMostRecentArjunScanStatus
+      );
+    }
+  }, [activeTarget]);
+
+  useEffect(() => {
+    if (activeTarget && activeTarget.type === 'URL') {
+      monitorParamethScanStatus(
+        activeTarget,
+        setParamethScans,
+        setMostRecentParamethScan,
+        setIsParamethScanning,
+        setMostRecentParamethScanStatus
+      );
+    }
+  }, [activeTarget]);
+
+  useEffect(() => {
+    if (activeTarget && activeTarget.type === 'URL') {
+      monitorX8ScanStatus(
+        activeTarget,
+        setX8Scans,
+        setMostRecentX8Scan,
+        setIsX8Scanning,
+        setMostRecentX8ScanStatus
+      );
+    }
+  }, [activeTarget]);
+
+  useEffect(() => {
     if (activeTarget) {
       monitorShuffleDNSScanStatus(
         activeTarget,
@@ -1321,7 +1542,7 @@ function App() {
       const fetchCustomShuffleDNSScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/scope-targets/${activeTarget.id}/shufflednscustom-scans`
+            `/api/api/scope-targets/${activeTarget.id}/shufflednscustom-scans`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch custom ShuffleDNS scans');
@@ -1389,7 +1610,7 @@ function App() {
         try {
           // First check if there's an active session for this target
           const sessionResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/auto-scan/sessions?target_id=${activeTarget.id}`
+            `/api/api/auto-scan/sessions?target_id=${activeTarget.id}`
           );
           
           if (sessionResponse.ok) {
@@ -1406,7 +1627,7 @@ function App() {
           
           // Then check the current step
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/auto-scan-state/${activeTarget.id}`
+            `/api/api/auto-scan-state/${activeTarget.id}`
           );
           
           if (response.ok) {
@@ -1496,8 +1717,15 @@ function App() {
         setMostRecentNucleiScreenshotScanStatus,
           setMostRecentMetaDataScanStatus,
         setMostRecentShuffleDNSCustomScanStatus,
-        // Other functions
-        handleConsolidate
+        handleConsolidate,
+        undefined,
+        undefined,
+        setIsWildcardNucleiScanning,
+        setWildcardNucleiScans,
+        setMostRecentWildcardNucleiScan,
+        setMostRecentWildcardNucleiScanStatus,
+        httpxScanConfig,
+        setActiveWildcardNucleiScan
       ),
       consolidatedSubdomains,
       mostRecentHttpxScan,
@@ -1539,7 +1767,7 @@ function App() {
 
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass/${mostRecentScan.scan_id}/subdomain`
+          `/api/amass/${mostRecentScan.scan_id}/subdomain`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch subdomains');
@@ -1566,7 +1794,7 @@ function App() {
 
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass/${mostRecentScan.scan_id}/cloud`
+          `/api/amass/${mostRecentScan.scan_id}/cloud`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch cloud domains');
@@ -1607,7 +1835,7 @@ function App() {
 
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass/${mostRecentScan.scan_id}/dns`
+          `/api/amass/${mostRecentScan.scan_id}/dns`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch DNS records');
@@ -1656,7 +1884,7 @@ function App() {
       }
 
       try {
-        const response = await fetch(`${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/add`, {
+        const response = await fetch(`/api/scopetarget/add`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1693,7 +1921,7 @@ function App() {
     if (!idToDelete) return;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/delete/${idToDelete}`, {
+      const response = await fetch(`/api/scopetarget/delete/${idToDelete}`, {
         method: 'DELETE',
       });
 
@@ -1723,7 +1951,7 @@ function App() {
   const fetchScopeTargets = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/read`
+        `/api/scopetarget/read`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch scope targets');
@@ -1732,20 +1960,21 @@ function App() {
       setScopeTargets(data || []);
       setFadeIn(true);
       
+      const bblpDismissed = localStorage.getItem('bblp_modal_dismissed');
+      if (!bblpDismissed) {
+        setShowLaunchPadModal(true);
+      }
+
       if (data && data.length > 0) {
-        // Find the active scope target
         const activeTargets = data.filter(target => target.active);
         
         if (activeTargets.length === 1) {
-          // One active target found, use it
           setActiveTarget(activeTargets[0]);
         } else {
-          // No active target or multiple active targets, use first target and set it as active
           setActiveTarget(data[0]);
-          // Call the API to set the first target as active
           try {
             await fetch(
-              `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${data[0].id}/activate`,
+              `/api/scopetarget/${data[0].id}/activate`,
               {
                 method: 'POST',
               }
@@ -1754,7 +1983,7 @@ function App() {
             console.error('Error setting active scope target:', error);
           }
         }
-      } else {
+      } else if (bblpDismissed) {
         setShowWelcomeModal(true);
       }
     } catch (error) {
@@ -1803,6 +2032,14 @@ function App() {
     setShuffleDNSCustomScans([]);
     setMostRecentShuffleDNSCustomScan(null);
     setMostRecentShuffleDNSCustomScanStatus(null);
+    setNucleiScans([]);
+    setMostRecentNucleiScan(null);
+    setMostRecentNucleiScanStatus(null);
+    setActiveNucleiScan(null);
+    setWildcardNucleiScans([]);
+    setMostRecentWildcardNucleiScan(null);
+    setMostRecentWildcardNucleiScanStatus(null);
+    setActiveWildcardNucleiScan(null);
     setAutoScanSessions([]);
     setAutoScanSessionId(null);
     setAutoScanCurrentStep(AUTO_SCAN_STEPS.IDLE);
@@ -1830,10 +2067,11 @@ function App() {
     setMostRecentGitHubReconScanStatus(null);
     
     setActiveTarget(target);
+    
     // Update the backend to set this target as active
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/activate`,
+        `/api/scopetarget/${target.id}/activate`,
         {
           method: 'POST',
         }
@@ -1851,7 +2089,7 @@ function App() {
       if (target.id) {
         // Fetch screenshot scans
         const screenshotResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/scans/nuclei-screenshot`
+          `/api/scopetarget/${target.id}/scans/nuclei-screenshot`
         );
         if (screenshotResponse.ok) {
           const screenshotData = await screenshotResponse.json();
@@ -1864,7 +2102,7 @@ function App() {
 
         // Fetch metadata scans
         const metadataResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/scans/metadata`
+          `/api/scopetarget/${target.id}/scans/metadata`
         );
         if (metadataResponse.ok) {
           const metadataData = await metadataResponse.json();
@@ -1877,7 +2115,7 @@ function App() {
 
         // Fetch CEWL scans
         const cewlResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/scans/cewl`
+          `/api/scopetarget/${target.id}/scans/cewl`
         );
         if (cewlResponse.ok) {
           const cewlData = await cewlResponse.json();
@@ -1890,7 +2128,7 @@ function App() {
 
         // Fetch ShuffleDNS scans
         const shufflednsResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/scans/shuffledns`
+          `/api/scopetarget/${target.id}/scans/shuffledns`
         );
         if (shufflednsResponse.ok) {
           const shufflednsData = await shufflednsResponse.json();
@@ -1903,7 +2141,7 @@ function App() {
 
         // Fetch ShuffleDNS Custom scans
         const shufflednsCustomResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/scope-targets/${target.id}/shufflednscustom-scans`
+          `/api/api/scope-targets/${target.id}/shufflednscustom-scans`
         );
         if (shufflednsCustomResponse.ok) {
           const shufflednsCustomData = await shufflednsCustomResponse.json();
@@ -1916,7 +2154,7 @@ function App() {
 
         // Fetch SecurityTrails Company scans
         const securitytrailsResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/scans/securitytrails-company`
+          `/api/scopetarget/${target.id}/scans/securitytrails-company`
         );
         if (securitytrailsResponse.ok) {
           const securitytrailsData = await securitytrailsResponse.json();
@@ -1935,7 +2173,7 @@ function App() {
 
         // Fetch Censys Company scans
         const censysResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/scans/censys-company`
+          `/api/scopetarget/${target.id}/scans/censys-company`
         );
         if (censysResponse.ok) {
           const censysData = await censysResponse.json();
@@ -1954,7 +2192,7 @@ function App() {
 
         // Fetch Shodan Company scans
         const shodanResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/scans/shodan-company`
+          `/api/scopetarget/${target.id}/scans/shodan-company`
         );
         if (shodanResponse.ok) {
           const shodanData = await shodanResponse.json();
@@ -1973,7 +2211,7 @@ function App() {
 
         // Fetch GitHub Recon scans
         const githubResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${target.id}/scans/github-recon`
+          `/api/scopetarget/${target.id}/scans/github-recon`
         );
         if (githubResponse.ok) {
           const githubData = await githubResponse.json();
@@ -2020,19 +2258,22 @@ function App() {
   const handleCloseAmassIntelHistoryModal = () => setShowAmassIntelHistoryModal(false);
 
   const startAutoScan = async () => {
-    console.log('[AutoScan] Starting Auto Scan. Fetching config from backend...');
-    
-    // Reset all scan-related states to avoid state persistence between scans
+    const currentTarget = activeTargetRef.current;
+    const currentHttpxConfig = httpxScanConfigRef.current;
+
+    if (!currentTarget) {
+      console.error('[AutoScan] No active target');
+      return;
+    }
+
+    console.log(`[AutoScan] Starting Auto Scan for target: ${currentTarget.scope_target}`);
+
     setAutoScanCurrentStep(AUTO_SCAN_STEPS.IDLE);
     setIsAutoScanning(false);
     setIsAutoScanPaused(false);
     setIsAutoScanPausing(false);
     setIsAutoScanCancelling(false);
-    
-    // Only reset consolidation state, not the actual subdomains
     setIsConsolidating(false);
-    
-    // Reset individual scan states
     setIsScanning(false);
     setIsSublist3rScanning(false);
     setIsAssetfinderScanning(false);
@@ -2046,27 +2287,26 @@ function App() {
     setIsSubdomainizerScanning(false);
     setIsNucleiScreenshotScanning(false);
     setIsMetaDataScanning(false);
-    
-    // Add a small delay to ensure state is fully reset
+    setIsWildcardNucleiScanning(false);
+
     await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/auto-scan-config`
+        `/api/api/auto-scan-config`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch auto scan config');
       }
       const config = await response.json();
       console.log('[AutoScan] Config received from backend:', config);
-      // Create session
       const sessionResp = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/auto-scan/session/start`,
+        `/api/api/auto-scan/session/start`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            scope_target_id: activeTarget.id,
+            scope_target_id: currentTarget.id,
             config_snapshot: config
           })
         }
@@ -2075,17 +2315,16 @@ function App() {
       const sessionData = await sessionResp.json();
       console.error(sessionData)
       setAutoScanSessionId(sessionData.session_id);
-      
-      // Now set isAutoScanning to true after all resets and config fetching
+
       setIsAutoScanning(true);
-      
+
       startAutoScanUtil(
-        activeTarget,
+        currentTarget,
         setIsAutoScanning,
         setAutoScanCurrentStep,
         setAutoScanTargetId,
         () => getAutoScanSteps(
-          activeTarget,
+          currentTarget,
           setAutoScanCurrentStep,
           setIsScanning,
           setIsSublist3rScanning,
@@ -2146,14 +2385,541 @@ function App() {
           setMostRecentShuffleDNSCustomScanStatus,
           handleConsolidate,
           config,
-          sessionData.session_id // pass session id
+          sessionData.session_id,
+          setIsWildcardNucleiScanning,
+          setWildcardNucleiScans,
+          setMostRecentWildcardNucleiScan,
+          setMostRecentWildcardNucleiScanStatus,
+          currentHttpxConfig,
+          setActiveWildcardNucleiScan
         ),
-        consolidatedSubdomains, // pass consolidated subdomains
-        mostRecentHttpxScan, // pass most recent httpx scan
-        sessionData.session_id // pass session id
+        consolidatedSubdomains,
+        mostRecentHttpxScan,
+        sessionData.session_id
       );
     } catch (error) {
       console.error('[AutoScan] Error fetching config or starting scan:', error);
+    }
+  };
+
+  const waitForAutoScanCompletion = async (targetId) => {
+    let phase = 'waiting_for_idle';
+    let pollCount = 0;
+
+    return new Promise((resolve) => {
+      const checkState = async () => {
+        if (wildfireCancelledRef.current) {
+          resolve('cancelled');
+          return;
+        }
+        pollCount++;
+        try {
+          const response = await fetch(`/api/api/auto-scan-state/${targetId}`);
+          if (response.ok) {
+            const state = await response.json();
+
+            if (state.is_cancelled) {
+              resolve('cancelled');
+              return;
+            }
+
+            // If scan is paused (limit hit), cancel it and skip to next target
+            if (state.is_paused && phase === 'waiting_for_complete') {
+              console.log(`[Wildfire] Scan for ${targetId} paused due to limits at step ${state.current_step}. Skipping to next target.`);
+              try {
+                await fetch(`/api/api/auto-scan-state/${targetId}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    current_step: 'completed',
+                    is_paused: false,
+                    is_cancelled: false
+                  })
+                });
+              } catch (err) {
+                console.error('[Wildfire] Error unpausing/completing scan:', err);
+              }
+              resolve('limit_skipped');
+              return;
+            }
+
+            const step = state.current_step;
+            console.log(`[Wildfire] Poll #${pollCount} for ${targetId}: step=${step}, phase=${phase}`);
+
+            if (phase === 'waiting_for_idle') {
+              if (step === 'idle') {
+                phase = 'waiting_for_start';
+                console.log(`[Wildfire] Scan reset to idle for ${targetId}, waiting for first step...`);
+              } else if (step && step !== 'completed') {
+                phase = 'waiting_for_complete';
+                console.log(`[Wildfire] Scan already running for ${targetId}, step: ${step}`);
+              } else if (step === 'completed' && pollCount > 12) {
+                console.log(`[Wildfire] Scan for ${targetId} appears already completed (timeout fallback)`);
+                resolve('completed');
+                return;
+              }
+            } else if (phase === 'waiting_for_start') {
+              if (step && step !== 'idle' && step !== 'completed') {
+                phase = 'waiting_for_complete';
+                console.log(`[Wildfire] Scan started for ${targetId}, step: ${step}`);
+              } else if (step === 'completed') {
+                console.log(`[Wildfire] Scan for ${targetId} completed (fast finish after idle)`);
+                resolve('completed');
+                return;
+              }
+            } else if (phase === 'waiting_for_complete') {
+              if (step === 'completed') {
+                console.log(`[Wildfire] Scan completed for ${targetId}`);
+                resolve('completed');
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[Wildfire] Error checking auto scan state:', err);
+        }
+        setTimeout(checkState, 3000);
+      };
+      setTimeout(checkState, 2000);
+    });
+  };
+
+  const startWildfire = async (targets) => {
+    setIsWildfireRunning(true);
+    setWildfireCancelled(false);
+    wildfireCancelledRef.current = false;
+    setShowGlobalScansModal(true);
+
+    setWildfireProgress({
+      targets,
+      totalTargets: targets.length,
+      currentIndex: 0,
+      currentTarget: targets[0]
+    });
+
+    for (let i = 0; i < targets.length; i++) {
+      if (wildfireCancelledRef.current) {
+        console.log('[Wildfire] Cancelled by user.');
+        break;
+      }
+
+      const target = targets[i];
+      console.log(`[Wildfire] Starting target ${i + 1}/${targets.length}: ${target.scope_target}`);
+
+      setWildfireProgress({
+        targets,
+        totalTargets: targets.length,
+        currentIndex: i,
+        currentTarget: target
+      });
+
+      await handleActiveSelect(target);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      if (wildfireCancelledRef.current) break;
+
+      await startAutoScan();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      if (wildfireCancelledRef.current) break;
+
+      const result = await waitForAutoScanCompletion(target.id);
+      console.log(`[Wildfire] Target ${target.scope_target} finished with result: ${result}`);
+
+      if (result === 'limit_skipped') {
+        setWildfireProgress(prev => prev ? {
+          ...prev,
+          limitSkipped: { ...(prev.limitSkipped || {}), [target.id]: true }
+        } : null);
+      }
+
+      if (result === 'cancelled' && wildfireCancelledRef.current) break;
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    setWildfireProgress(prev => prev ? {
+      ...prev,
+      currentIndex: prev.totalTargets
+    } : null);
+
+    setIsWildfireRunning(false);
+    console.log('[Wildfire] All targets completed.');
+  };
+
+  const cancelWildfire = async () => {
+    wildfireCancelledRef.current = true;
+    setWildfireCancelled(true);
+
+    if (activeTarget && isAutoScanning) {
+      try {
+        await fetch(`/api/api/auto-scan-state/${activeTarget.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            current_step: autoScanCurrentStep,
+            is_paused: false,
+            is_cancelled: true
+          })
+        });
+      } catch (err) {
+        console.error('[Wildfire] Error cancelling current auto scan:', err);
+      }
+    }
+  };
+
+  const addSlowburnLog = (progressSetter, message, type = 'info') => {
+    const time = new Date().toLocaleTimeString();
+    progressSetter(prev => prev ? {
+      ...prev,
+      log: [...(prev.log || []), { time, message, type }]
+    } : null);
+  };
+
+  const startSlowburn = async (config) => {
+    const { apiKey, bountyOnly } = config;
+    setIsSlowburnRunning(true);
+    slowburnCancelledRef.current = false;
+    setShowGlobalScansModal(true);
+
+    setSlowburnProgress({
+      programsScanned: 0,
+      targetsScanned: 0,
+      currentProgram: null,
+      currentTarget: null,
+      scannedTargets: [],
+      lastCompletedTarget: null,
+      log: []
+    });
+
+    addSlowburnLog(setSlowburnProgress, 'Slowburn scan started', 'info');
+
+    let programsScanned = 0;
+    let targetsScanned = 0;
+    const scannedTargets = [];
+
+    // Discover total pages on first fetch
+    let maxPage = 1;
+    let discoveredMaxPage = false;
+
+    while (!slowburnCancelledRef.current) {
+      try {
+        // Fetch a random program
+        addSlowburnLog(setSlowburnProgress, 'Fetching random program from HackerOne...', 'info');
+
+        const randomPage = discoveredMaxPage ? Math.floor(Math.random() * maxPage) + 1 : 1;
+        const programsRes = await fetch(`/api/api/hackerone/programs?page[size]=100&page[number]=${randomPage}`, {
+          headers: { 'X-HackerOne-API-Key': apiKey }
+        });
+
+        if (!programsRes.ok) {
+          addSlowburnLog(setSlowburnProgress, `Failed to fetch programs (page ${randomPage}), retrying...`, 'error');
+          await new Promise(r => setTimeout(r, 5000));
+          continue;
+        }
+
+        const programsData = await programsRes.json();
+        const programs = programsData.data || [];
+
+        // Discover max page from pagination links
+        if (!discoveredMaxPage && programsData.links) {
+          const lastLink = programsData.links.last || '';
+          const pageMatch = lastLink.match(/page%5Bnumber%5D=(\d+)|page\[number\]=(\d+)/);
+          if (pageMatch) {
+            maxPage = parseInt(pageMatch[1] || pageMatch[2], 10);
+          } else if (programs.length > 0) {
+            // Estimate: if first page is full, assume a few pages exist
+            maxPage = programs.length >= 100 ? 5 : 1;
+          }
+          discoveredMaxPage = true;
+          addSlowburnLog(setSlowburnProgress, `Discovered ${maxPage} page(s) of programs`, 'info');
+        }
+
+        if (programs.length === 0) {
+          // Reduce max page if we hit an empty page
+          if (randomPage > 1) maxPage = randomPage - 1;
+          addSlowburnLog(setSlowburnProgress, `No programs found on page ${randomPage}, trying another page...`, 'info');
+          continue;
+        }
+
+        // Pick a random program from the page
+        const randomProgram = programs[Math.floor(Math.random() * programs.length)];
+        const handle = randomProgram.attributes?.handle || randomProgram.id;
+
+        // Check bounty filter
+        if (bountyOnly) {
+          const offersBounty = randomProgram.attributes?.offers_bounties;
+          if (!offersBounty) {
+            addSlowburnLog(setSlowburnProgress, `Skipping ${handle} (no bounty)`, 'info');
+            continue;
+          }
+        }
+
+        addSlowburnLog(setSlowburnProgress, `Selected program: ${handle}`, 'info');
+        setSlowburnProgress(prev => prev ? { ...prev, currentProgram: handle } : null);
+
+        if (slowburnCancelledRef.current) break;
+
+        // Fetch program details with structured scopes
+        const programRes = await fetch(`/api/api/hackerone/program?handle=${encodeURIComponent(handle)}`, {
+          headers: { 'X-HackerOne-API-Key': apiKey }
+        });
+
+        if (!programRes.ok) {
+          addSlowburnLog(setSlowburnProgress, `Failed to fetch program details for ${handle}`, 'error');
+          continue;
+        }
+
+        const programData = await programRes.json();
+        // Scopes are in relationships.structured_scopes.data, not in included
+        const structuredScopes = programData.relationships?.structured_scopes?.data || [];
+
+        // Find wildcard scope targets
+        const wildcardScopes = structuredScopes.filter(item => {
+          if (item.type !== 'structured-scope') return false;
+          const attrs = item.attributes || {};
+          if (attrs.eligible_for_submission !== true) return false;
+          const assetType = (attrs.asset_type || '').toUpperCase();
+          const identifier = attrs.asset_identifier || '';
+          return (assetType === 'URL' || assetType === 'DOMAIN' || assetType === 'WILDCARD') &&
+                 identifier.startsWith('*.');
+        });
+
+        if (wildcardScopes.length === 0) {
+          addSlowburnLog(setSlowburnProgress, `No wildcard targets found for ${handle}, moving on...`, 'info');
+          continue;
+        }
+
+        addSlowburnLog(setSlowburnProgress, `Found ${wildcardScopes.length} wildcard target(s) for ${handle}`, 'success');
+        programsScanned++;
+        setSlowburnProgress(prev => prev ? { ...prev, programsScanned } : null);
+
+        // Scan each wildcard target
+        for (const scope of wildcardScopes) {
+          if (slowburnCancelledRef.current) break;
+
+          const domain = scope.attributes.asset_identifier;
+          addSlowburnLog(setSlowburnProgress, `Adding and scanning ${domain}...`, 'info');
+          setSlowburnProgress(prev => prev ? { ...prev, currentTarget: domain } : null);
+
+          // Add the wildcard target to the framework
+          try {
+            const addRes = await fetch('/api/scopetarget/add', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'Wildcard',
+                mode: 'Passive',
+                scope_target: domain,
+                active: false,
+              }),
+            });
+
+            if (!addRes.ok) {
+              // Target might already exist, try to find it
+              addSlowburnLog(setSlowburnProgress, `Target ${domain} may already exist, looking up...`, 'info');
+            } else {
+              addSlowburnLog(setSlowburnProgress, `Added ${domain} as Wildcard target`, 'success');
+            }
+
+            // Refresh scope targets and find the one we just added
+            await fetchScopeTargets();
+            await new Promise(r => setTimeout(r, 1000));
+
+            // Find the target we just added (refetch latest)
+            const readRes = await fetch('/api/scopetarget/read');
+            const allTargets = readRes.ok ? await readRes.json() : [];
+            const matchedTarget = allTargets.find(t => t.scope_target === domain && t.type === 'Wildcard');
+
+            if (!matchedTarget) {
+              addSlowburnLog(setSlowburnProgress, `Could not find target ${domain} after adding, skipping...`, 'error');
+              continue;
+            }
+
+            if (slowburnCancelledRef.current) break;
+
+            // Select this target as active
+            await handleActiveSelect(matchedTarget);
+            await new Promise(r => setTimeout(r, 2000));
+
+            if (slowburnCancelledRef.current) break;
+
+            // Start auto scan
+            addSlowburnLog(setSlowburnProgress, `Starting Auto Scan for ${domain}...`, 'info');
+            await startAutoScan();
+            await new Promise(r => setTimeout(r, 3000));
+
+            if (slowburnCancelledRef.current) break;
+
+            // Wait for completion
+            const result = await waitForSlowburnScanCompletion(matchedTarget.id);
+            if (result === 'limit_skipped') {
+              addSlowburnLog(setSlowburnProgress, `${domain} — limit reached, skipping to next target`, 'info');
+            } else {
+              addSlowburnLog(setSlowburnProgress, `${domain} finished: ${result}`, result === 'completed' ? 'success' : 'info');
+            }
+
+            // Fetch stats for completed target
+            const statsRes = await Promise.all([
+              fetch(`/api/consolidated-subdomains/${matchedTarget.id}`).catch(() => null),
+              fetch(`/api/scopetarget/${matchedTarget.id}/scans/httpx`).catch(() => null),
+              fetch(`/api/scopetarget/${matchedTarget.id}/scans/nuclei`).catch(() => null),
+            ]);
+
+            let subdomains = 0, webServers = 0, nucleiTotal = 0;
+            if (statsRes[0]?.ok) {
+              const d = await statsRes[0].json();
+              subdomains = d.count || 0;
+            }
+            if (statsRes[1]?.ok) {
+              const d = await statsRes[1].json();
+              if (d.scans?.length > 0) {
+                const latest = d.scans.reduce((a, b) => new Date(b.created_at) > new Date(a.created_at) ? b : a);
+                webServers = latest.result ? latest.result.split('\n').filter(l => l.trim()).length : 0;
+              }
+            }
+            if (statsRes[2]?.ok) {
+              const scans = await statsRes[2].json();
+              if (Array.isArray(scans)) {
+                const successScans = scans.filter(sc => sc.status === 'success' && sc.result);
+                if (successScans.length > 0) {
+                  const latest = successScans.reduce((a, b) => new Date(b.created_at) > new Date(a.created_at) ? b : a);
+                  try {
+                    const findings = JSON.parse(latest.result);
+                    nucleiTotal = Array.isArray(findings) ? findings.length : 0;
+                  } catch {}
+                }
+              }
+            }
+
+            addSlowburnLog(setSlowburnProgress, `${domain} results — ${subdomains} subdomains, ${webServers} live servers, ${nucleiTotal} nuclei findings`, 'success');
+
+            targetsScanned++;
+            const targetEntry = { program: handle, target: domain, subdomains, webServers, nucleiTotal };
+            scannedTargets.push(targetEntry);
+
+            setSlowburnProgress(prev => prev ? {
+              ...prev,
+              targetsScanned,
+              scannedTargets: [...scannedTargets],
+              lastCompletedTarget: domain,
+              currentTarget: null
+            } : null);
+
+            await new Promise(r => setTimeout(r, 2000));
+
+          } catch (err) {
+            addSlowburnLog(setSlowburnProgress, `Error scanning ${domain}: ${err.message}`, 'error');
+            console.error('[Slowburn] Error scanning target:', err);
+          }
+        }
+
+      } catch (err) {
+        addSlowburnLog(setSlowburnProgress, `Unexpected error: ${err.message}`, 'error');
+        console.error('[Slowburn] Unexpected error:', err);
+        await new Promise(r => setTimeout(r, 5000));
+      }
+    }
+
+    addSlowburnLog(setSlowburnProgress, 'Slowburn scan stopped', 'info');
+    setIsSlowburnRunning(false);
+    console.log('[Slowburn] Scan stopped.');
+  };
+
+  const waitForSlowburnScanCompletion = async (targetId) => {
+    let phase = 'waiting_for_idle';
+    let pollCount = 0;
+
+    return new Promise((resolve) => {
+      const checkState = async () => {
+        if (slowburnCancelledRef.current) {
+          resolve('cancelled');
+          return;
+        }
+        pollCount++;
+        try {
+          const response = await fetch(`/api/api/auto-scan-state/${targetId}`);
+          if (response.ok) {
+            const state = await response.json();
+
+            if (state.is_cancelled) {
+              resolve('cancelled');
+              return;
+            }
+
+            // If scan is paused (limit hit), cancel it and skip to next target
+            if (state.is_paused && phase === 'waiting_for_complete') {
+              console.log(`[Slowburn] Scan for ${targetId} paused due to limits at step ${state.current_step}. Skipping to next target.`);
+              addSlowburnLog(setSlowburnProgress, `Subdomain/web server limit reached at ${state.current_step}. Skipping to next target.`, 'info');
+              try {
+                await fetch(`/api/api/auto-scan-state/${targetId}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    current_step: 'completed',
+                    is_paused: false,
+                    is_cancelled: false
+                  })
+                });
+              } catch (err) {
+                console.error('[Slowburn] Error unpausing/completing scan:', err);
+              }
+              resolve('limit_skipped');
+              return;
+            }
+
+            const step = state.current_step;
+
+            if (phase === 'waiting_for_idle') {
+              if (step === 'idle') {
+                phase = 'waiting_for_start';
+              } else if (step && step !== 'completed') {
+                phase = 'waiting_for_complete';
+              } else if (step === 'completed' && pollCount > 12) {
+                resolve('completed');
+                return;
+              }
+            } else if (phase === 'waiting_for_start') {
+              if (step && step !== 'idle' && step !== 'completed') {
+                phase = 'waiting_for_complete';
+              } else if (step === 'completed') {
+                resolve('completed');
+                return;
+              }
+            } else if (phase === 'waiting_for_complete') {
+              if (step === 'completed') {
+                resolve('completed');
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[Slowburn] Error checking auto scan state:', err);
+        }
+        setTimeout(checkState, 3000);
+      };
+      setTimeout(checkState, 2000);
+    });
+  };
+
+  const cancelSlowburn = async () => {
+    slowburnCancelledRef.current = true;
+    addSlowburnLog(setSlowburnProgress, 'Cancelling Slowburn scan...', 'info');
+
+    if (activeTarget && isAutoScanning) {
+      try {
+        await fetch(`/api/api/auto-scan-state/${activeTarget.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            current_step: autoScanCurrentStep,
+            is_paused: false,
+            is_cancelled: true
+          })
+        });
+      } catch (err) {
+        console.error('[Slowburn] Error cancelling current auto scan:', err);
+      }
     }
   };
 
@@ -2164,7 +2930,9 @@ function App() {
       setIsHttpxScanning,
       setHttpxScans,
       setMostRecentHttpxScanStatus,
-      setMostRecentHttpxScan
+      setMostRecentHttpxScan,
+      null,
+      httpxScanConfig
     );
   };
 
@@ -2381,13 +3149,58 @@ function App() {
   const loadNucleiConfig = async () => {
     if (!activeTarget?.id) return;
 
+    const ALL_TEMPLATES = ['cves', 'vulnerabilities', 'exposures', 'technologies', 'misconfiguration', 'takeovers', 'network', 'dns', 'headless'];
+    const ALL_SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
+
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/nuclei-config/${activeTarget.id}`
+        `/api/nuclei-config/${activeTarget.id}`
       );
-      
+
       if (response.ok) {
         const config = await response.json();
+
+        if (!config.templates || config.templates.length === 0) {
+          config.templates = ALL_TEMPLATES;
+        }
+        if (!config.severities || config.severities.length === 0) {
+          config.severities = ALL_SEVERITIES;
+        }
+
+        if (!config.targets || config.targets.length === 0) {
+          try {
+            let autoTargets = [];
+            if (activeTarget.type === 'Wildcard') {
+              const targetsResp = await fetch(`/api/scopetarget/${activeTarget.id}/wildcard-nuclei-targets`);
+              if (targetsResp.ok) {
+                const data = await targetsResp.json();
+                autoTargets = (data.targets || []).filter(Boolean);
+              }
+            } else {
+              const assetsResp = await fetch(`/api/attack-surface-assets/${activeTarget.id}`);
+              if (assetsResp.ok) {
+                const data = await assetsResp.json();
+                if (data.assets && Array.isArray(data.assets)) {
+                  autoTargets = data.assets.map(a => a.id).filter(Boolean);
+                }
+              }
+            }
+
+            if (autoTargets.length > 0) {
+              config.targets = autoTargets;
+              config.target_mode = activeTarget.type === 'Wildcard' ? 'httpx_targets' : 'attack_surface';
+
+              await fetch(`/api/nuclei-config/${activeTarget.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config),
+              });
+            }
+          } catch (targetErr) {
+            console.error('Error auto-populating Nuclei targets:', targetErr);
+          }
+        }
+
         setNucleiConfig(config);
       }
     } catch (error) {
@@ -2402,13 +3215,10 @@ function App() {
   };
 
   const isNucleiScanDisabled = () => {
-    return !nucleiConfig || 
-           !nucleiConfig.targets || 
-           !Array.isArray(nucleiConfig.targets) || 
-           nucleiConfig.targets.length === 0 || 
-           !nucleiConfig.templates || 
-           !Array.isArray(nucleiConfig.templates) || 
-           nucleiConfig.templates.length === 0;
+    if (!nucleiConfig || !nucleiConfig.targets || !Array.isArray(nucleiConfig.targets) || nucleiConfig.targets.length === 0) return true;
+    const hasCategories = nucleiConfig.templates && Array.isArray(nucleiConfig.templates) && nucleiConfig.templates.length > 0;
+    const hasIndividualTemplates = nucleiConfig.template_ids && Array.isArray(nucleiConfig.template_ids) && nucleiConfig.template_ids.length > 0;
+    return !hasCategories && !hasIndividualTemplates;
   };
 
   const getNucleiSelectedTargetsCount = () => {
@@ -2417,8 +3227,10 @@ function App() {
   };
 
   const getNucleiSelectedTemplatesCount = () => {
-    if (!nucleiConfig?.templates || !Array.isArray(nucleiConfig.templates)) return 0;
-    return nucleiConfig.templates.length;
+    let count = 0;
+    if (nucleiConfig?.templates && Array.isArray(nucleiConfig.templates)) count += nucleiConfig.templates.length;
+    if (nucleiConfig?.template_ids && Array.isArray(nucleiConfig.template_ids)) count += nucleiConfig.template_ids.length;
+    return count;
   };
 
   const getNucleiEstimatedScanTime = () => {
@@ -2497,6 +3309,136 @@ function App() {
   const handleOpenNucleiHistoryModal = () => setShowNucleiHistoryModal(true);
   const handleCloseNucleiHistoryModal = () => setShowNucleiHistoryModal(false);
 
+  const handleCloseWildcardNucleiConfigModal = () => setShowWildcardNucleiConfigModal(false);
+  const handleOpenWildcardNucleiConfigModal = () => setShowWildcardNucleiConfigModal(true);
+
+  const loadWildcardNucleiConfig = async () => {
+    if (!activeTarget?.id) return;
+
+    const ALL_TEMPLATES = ['cves', 'vulnerabilities', 'exposures', 'technologies', 'misconfiguration', 'takeovers', 'network', 'dns', 'headless'];
+    const ALL_SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
+
+    try {
+      const response = await fetch(`/api/nuclei-config/${activeTarget.id}`);
+      if (response.ok) {
+        const config = await response.json();
+        let needsSave = false;
+
+        if (!config.templates || config.templates.length === 0) {
+          config.templates = ALL_TEMPLATES;
+          needsSave = true;
+        }
+        if (!config.severities || config.severities.length === 0) {
+          config.severities = ALL_SEVERITIES;
+          needsSave = true;
+        }
+
+        if (!config.targets || config.targets.length === 0) {
+          try {
+            const targetsResponse = await fetch(`/api/scopetarget/${activeTarget.id}/wildcard-nuclei-targets`);
+            if (targetsResponse.ok) {
+              const targetsData = await targetsResponse.json();
+              const httpxTargets = (targetsData.targets || []).filter(Boolean);
+              if (httpxTargets.length > 0) {
+                config.targets = httpxTargets;
+                config.target_mode = 'httpx_targets';
+                needsSave = true;
+              }
+            }
+          } catch (targetErr) {
+            console.error('Error auto-populating Nuclei targets:', targetErr);
+          }
+        }
+
+        if (needsSave && config.targets && config.targets.length > 0) {
+          await fetch(`/api/nuclei-config/${activeTarget.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config),
+          });
+        }
+
+        setWildcardNucleiConfig(config);
+      }
+    } catch (error) {
+      console.error('Error loading Wildcard Nuclei config:', error);
+    }
+  };
+
+  const handleWildcardNucleiConfigSave = async (config) => {
+    setWildcardNucleiConfig(config);
+    setShowWildcardNucleiConfigModal(false);
+  };
+
+  const isWildcardNucleiScanDisabled = () => {
+    return !wildcardNucleiConfig ||
+           !wildcardNucleiConfig.targets ||
+           !Array.isArray(wildcardNucleiConfig.targets) ||
+           wildcardNucleiConfig.targets.length === 0 ||
+           ((!wildcardNucleiConfig.templates || !Array.isArray(wildcardNucleiConfig.templates) || wildcardNucleiConfig.templates.length === 0) &&
+            (!wildcardNucleiConfig.template_ids || !Array.isArray(wildcardNucleiConfig.template_ids) || wildcardNucleiConfig.template_ids.length === 0));
+  };
+
+  const getWildcardNucleiSelectedTargetsCount = () => {
+    if (!wildcardNucleiConfig?.targets || !Array.isArray(wildcardNucleiConfig.targets)) return 0;
+    return wildcardNucleiConfig.targets.length;
+  };
+
+  const getWildcardNucleiSelectedTemplatesCount = () => {
+    let count = 0;
+    if (wildcardNucleiConfig?.templates && Array.isArray(wildcardNucleiConfig.templates)) count += wildcardNucleiConfig.templates.length;
+    if (wildcardNucleiConfig?.template_ids && Array.isArray(wildcardNucleiConfig.template_ids)) count += wildcardNucleiConfig.template_ids.length;
+    return count;
+  };
+
+  const getWildcardNucleiTotalFindings = () => {
+    if (!mostRecentWildcardNucleiScan?.result) return 0;
+    try {
+      let findings = [];
+      if (typeof mostRecentWildcardNucleiScan.result === 'string') {
+        findings = JSON.parse(mostRecentWildcardNucleiScan.result);
+      } else if (Array.isArray(mostRecentWildcardNucleiScan.result)) {
+        findings = mostRecentWildcardNucleiScan.result;
+      }
+      return Array.isArray(findings) ? findings.length : 0;
+    } catch (error) { return 0; }
+  };
+
+  const getWildcardNucleiImpactfulFindings = () => {
+    if (!mostRecentWildcardNucleiScan?.result) return 0;
+    try {
+      let findings = [];
+      if (typeof mostRecentWildcardNucleiScan.result === 'string') {
+        findings = JSON.parse(mostRecentWildcardNucleiScan.result);
+      } else if (Array.isArray(mostRecentWildcardNucleiScan.result)) {
+        findings = mostRecentWildcardNucleiScan.result;
+      }
+      if (!Array.isArray(findings)) return 0;
+      return findings.filter(f => {
+        const sev = f.info?.severity?.toLowerCase();
+        return sev && sev !== 'info' && sev !== 'informational';
+      }).length;
+    } catch (error) { return 0; }
+  };
+
+  const handleOpenWildcardNucleiResultsModal = () => setShowWildcardNucleiResultsModal(true);
+  const handleCloseWildcardNucleiResultsModal = () => setShowWildcardNucleiResultsModal(false);
+
+  const handleOpenWildcardNucleiHistoryModal = () => setShowWildcardNucleiHistoryModal(true);
+  const handleCloseWildcardNucleiHistoryModal = () => setShowWildcardNucleiHistoryModal(false);
+
+  const startWildcardNucleiScan = () => {
+    initiateNucleiScan(
+      activeTarget,
+      monitorNucleiScanStatus,
+      setIsWildcardNucleiScanning,
+      setWildcardNucleiScans,
+      setMostRecentWildcardNucleiScanStatus,
+      setMostRecentWildcardNucleiScan,
+      setActiveWildcardNucleiScan
+    );
+  };
+
   const handleCloseKatanaCompanyResultsModal = () => setShowKatanaCompanyResultsModal(false);
   const handleOpenKatanaCompanyResultsModal = () => setShowKatanaCompanyResultsModal(true);
 
@@ -2508,6 +3450,13 @@ function App() {
   const handleOpenExploreAttackSurfaceModal = () => setShowExploreAttackSurfaceModal(true);
   const handleCloseAttackSurfaceVisualizationModal = () => setShowAttackSurfaceVisualizationModal(false);
   const handleOpenAttackSurfaceVisualizationModal = () => setShowAttackSurfaceVisualizationModal(true);
+  const handleCloseManageAttackSurfaceModal = () => setShowManageAttackSurfaceModal(false);
+  const handleOpenManageAttackSurfaceModal = () => setShowManageAttackSurfaceModal(true);
+  const handleAttackSurfaceAssetChange = () => {
+    if (activeTarget) {
+      fetchAttackSurfaceAssetCounts(activeTarget, setAttackSurfaceASNsCount, setAttackSurfaceNetworkRangesCount, setAttackSurfaceIPAddressesCount, setAttackSurfaceLiveWebServersCount, setAttackSurfaceCloudAssetsCount, setAttackSurfaceFQDNsCount);
+    }
+  };
   const handleOpenKatanaCompanyConfigModal = () => setShowKatanaCompanyConfigModal(true);
 
   const handleKatanaCompanyConfigSave = async (config) => {
@@ -2522,7 +3471,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/katana-company-config/${activeTarget.id}`
+        `/api/katana-company-config/${activeTarget.id}`
       );
       
       if (!response.ok) {
@@ -2606,7 +3555,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/google-dorking-domains`, {
+      const response = await fetch(`/api/api/google-dorking-domains`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2640,7 +3589,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/google-dorking-domains/${activeTarget.id}`
+        `/api/api/google-dorking-domains/${activeTarget.id}`
       );
       if (response.ok) {
         const domains = await response.json();
@@ -2657,7 +3606,7 @@ function App() {
     try {
       console.log('[fetchNucleiScans] Fetching nuclei scans for target:', activeTarget.id);
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/nuclei`
+        `/api/scopetarget/${activeTarget.id}/scans/nuclei`
       );
 
       if (response.ok) {
@@ -2672,11 +3621,7 @@ function App() {
             console.log('[fetchNucleiScans] Most recent scan:', mostRecentScan);
             setMostRecentNucleiScan(mostRecentScan);
             setMostRecentNucleiScanStatus(mostRecentScan.status);
-            
-            // Set the most recent scan as active if no active scan is currently set
-            if (!activeNucleiScan) {
-              setActiveNucleiScan(mostRecentScan);
-            }
+            setActiveNucleiScan(mostRecentScan);
           } else {
             console.log('[fetchNucleiScans] No nuclei scans found');
             setMostRecentNucleiScan(null);
@@ -2695,7 +3640,7 @@ function App() {
   const deleteGoogleDorkingDomain = async (domainId) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/google-dorking-domains/${domainId}`,
+        `/api/api/google-dorking-domains/${domainId}`,
         { method: 'DELETE' }
       );
 
@@ -2725,13 +3670,14 @@ function App() {
   const handleOpenReconResultsModal = () => setShowReconResultsModal(true);
 
   const handleConsolidate = async () => {
-    if (!activeTarget) return;
+    const target = activeTargetRef.current;
+    if (!target) return;
     
     setIsConsolidating(true);
     try {
-      const result = await consolidateSubdomains(activeTarget);
+      const result = await consolidateSubdomains(target);
       if (result) {
-        await fetchConsolidatedSubdomains(activeTarget, setConsolidatedSubdomains, setConsolidatedCount);
+        await fetchConsolidatedSubdomains(target, setConsolidatedSubdomains, setConsolidatedCount);
       }
     } catch (error) {
       console.error('Error during consolidation:', error);
@@ -2769,7 +3715,7 @@ function App() {
         // Fetch updated counts after consolidation
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/attack-surface-asset-counts/${activeTarget.id}`,
+            `/api/attack-surface-asset-counts/${activeTarget.id}`,
             {
               method: 'GET',
               headers: {
@@ -2810,7 +3756,7 @@ function App() {
         // Fetch updated counts after investigation
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/attack-surface-asset-counts/${activeTarget.id}`,
+            `/api/attack-surface-asset-counts/${activeTarget.id}`,
             {
               method: 'GET',
               headers: {
@@ -2840,6 +3786,37 @@ function App() {
   };
 
   const handleOpenUniqueSubdomainsModal = () => setShowUniqueSubdomainsModal(true);
+  const handleOpenConfigureHttpxModal = () => setShowConfigureHttpxModal(true);
+  const handleCloseConfigureHttpxModal = () => setShowConfigureHttpxModal(false);
+  const handleSaveHttpxConfig = async (config) => {
+    setHttpxScanConfig(config);
+    if (activeTarget?.id) {
+      try {
+        await fetch(`/api/httpx-config/${activeTarget.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config),
+        });
+      } catch (err) {
+        console.error('Error saving HTTPX config to server:', err);
+      }
+    }
+  };
+
+  const loadHttpxConfig = async () => {
+    if (!activeTarget?.id) return;
+    try {
+      const response = await fetch(`/api/httpx-config/${activeTarget.id}`);
+      if (response.ok) {
+        const config = await response.json();
+        if (config && Object.keys(config).length > 0) {
+          setHttpxScanConfig(config);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading HTTPX config:', err);
+    }
+  };
 
   const handleOpenCeWLResultsModal = () => setShowCeWLResultsModal(true);
   const handleCloseCeWLResultsModal = () => setShowCeWLResultsModal(false);
@@ -2938,14 +3915,48 @@ function App() {
     }
   }, [activeTarget]);
 
-  const startMetaDataScan = () => {
+  const startMetaDataScan = async () => {
+    console.log('[DEBUG] startMetaDataScan called');
+    console.log('[DEBUG] isMetaDataScanning:', isMetaDataScanning);
+    console.log('[DEBUG] mostRecentMetaDataScanStatus:', mostRecentMetaDataScanStatus);
+    console.log('[DEBUG] mostRecentMetaDataScan:', mostRecentMetaDataScan);
+    
+    if (isMetaDataScanning || mostRecentMetaDataScanStatus === "pending" || mostRecentMetaDataScanStatus === "running") {
+      console.log('[DEBUG] Scan is running, attempting to cancel...');
+      if (mostRecentMetaDataScan && mostRecentMetaDataScan.scan_id) {
+        console.log('[DEBUG] Cancelling metadata scan with ID:', mostRecentMetaDataScan.scan_id);
+        const result = await cancelMetaDataScan(mostRecentMetaDataScan.scan_id);
+        console.log('[DEBUG] Cancel result:', result);
+        if (result.success) {
+          console.log('[DEBUG] Metadata scan cancellation requested successfully');
+          monitorMetaDataScanStatus(
+            activeTarget,
+            setMetaDataScans,
+            setMostRecentMetaDataScan,
+            setIsMetaDataScanning,
+            setMostRecentMetaDataScanStatus
+          );
+        } else {
+          console.error('[DEBUG] Failed to cancel metadata scan:', result.error);
+        }
+      } else {
+        console.log('[DEBUG] No scan_id available in mostRecentMetaDataScan');
+      }
+      return;
+    }
+
+    console.log('[DEBUG] Starting new metadata scan...');
+
+    const config = activeTarget ? metaDataScanConfigs[activeTarget.id] : null;
     initiateMetaDataScan(
       activeTarget,
       monitorMetaDataScanStatus,
       setIsMetaDataScanning,
       setMetaDataScans,
       setMostRecentMetaDataScanStatus,
-      setMostRecentMetaDataScan
+      setMostRecentMetaDataScan,
+      null,
+      config
     );
   };
 
@@ -2960,6 +3971,24 @@ function App() {
       );
     }
   }, [activeTarget]);
+
+  const [metaDataElapsedTime, setMetaDataElapsedTime] = useState('0m 00s');
+
+  useEffect(() => {
+    let intervalId;
+    if ((mostRecentMetaDataScanStatus === 'running' || mostRecentMetaDataScanStatus === 'pending' || mostRecentMetaDataScanStatus === 'cancelling') && 
+        mostRecentMetaDataScan && mostRecentMetaDataScan.created_at) {
+      intervalId = setInterval(() => {
+        const elapsed = Math.floor((new Date() - new Date(mostRecentMetaDataScan.created_at)) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        setMetaDataElapsedTime(`${minutes}m ${seconds.toString().padStart(2, '0')}s`);
+      }, 1000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [mostRecentMetaDataScanStatus, mostRecentMetaDataScan]);
 
   useEffect(() => {
     if (activeTarget && activeTarget.id) {
@@ -2978,7 +4007,7 @@ function App() {
     
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/scope-targets/${activeTarget.id}/target-urls`
+        `/api/api/scope-targets/${activeTarget.id}/target-urls`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch target URLs');
@@ -2996,7 +4025,7 @@ function App() {
     
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/scope-targets/${activeTarget.id}/target-urls`
+        `/api/api/scope-targets/${activeTarget.id}/target-urls`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch target URLs');
@@ -3021,6 +4050,12 @@ function App() {
     setShowToolsModal(true);
   };
 
+  const handleOpenToolsModalWithUrls = (urls) => {
+    setToolsModalInitialUrls(urls);
+    setToolsModalInitialTab('url-populator');
+    setShowToolsModal(true);
+  };
+
   const handleOpenExportModal = () => {
     setShowExportModal(true);
   };
@@ -3035,6 +4070,13 @@ function App() {
 
   const handleCloseWelcomeModal = () => {
     setShowWelcomeModal(false);
+  };
+
+  const handleCloseLaunchPadModal = () => {
+    setShowLaunchPadModal(false);
+    if (scopeTargets.length === 0) {
+      setShowWelcomeModal(true);
+    }
   };
 
   const handleCloseConfigUploadModal = () => {
@@ -3120,7 +4162,7 @@ function App() {
     
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/auto-scan-state/${targetId}`
+        `/api/api/auto-scan-state/${targetId}`
       );
       
       if (response.ok) {
@@ -3144,7 +4186,7 @@ function App() {
     if (!activeTarget || !activeTarget.id) return;
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/auto-scan/sessions?target_id=${activeTarget.id}`
+        `/api/api/auto-scan/sessions?target_id=${activeTarget.id}`
       );
       if (response.ok) {
         const rawData = await response.json();
@@ -3210,8 +4252,8 @@ function App() {
               subdomainizer: config.subdomainizer !== false,
               consolidate_round3: config.consolidate_httpx_round3 !== false,
               httpx_round3: config.consolidate_httpx_round3 !== false,
-              nuclei_screenshot: config.nuclei_screenshot !== false,
-              metadata: config.metadata !== false
+              metadata: (config.metadata !== false) || (config.nuclei_screenshot !== false),
+              nuclei_screenshot: (config.metadata !== false) || (config.nuclei_screenshot !== false)
             }
           };
         }) : [];
@@ -3239,7 +4281,7 @@ function App() {
       const interval = setInterval(async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/auto-scan-state/${activeTarget.id}`
+            `/api/api/auto-scan-state/${activeTarget.id}`
           );
           
           if (response.ok) {
@@ -3307,7 +4349,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/reverse-whois-domains`, {
+      const response = await fetch(`/api/api/reverse-whois-domains`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3341,7 +4383,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/reverse-whois-domains/${activeTarget.id}`
+        `/api/api/reverse-whois-domains/${activeTarget.id}`
       );
       if (response.ok) {
         const domains = await response.json();
@@ -3355,7 +4397,7 @@ function App() {
   const deleteReverseWhoisDomain = async (domainId) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/reverse-whois-domains/${domainId}`,
+        `/api/api/reverse-whois-domains/${domainId}`,
         { method: 'DELETE' }
       );
 
@@ -3391,7 +4433,7 @@ function App() {
       const fetchSecurityTrailsCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/securitytrails-company`
+            `/api/scopetarget/${activeTarget.id}/scans/securitytrails-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch SecurityTrails Company scans');
@@ -3420,7 +4462,7 @@ function App() {
     const checkAllApiKeys = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/api-keys`
+          `/api/api/api-keys`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch API keys');
@@ -3498,7 +4540,7 @@ function App() {
     // Re-check all API keys when one is deleted
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/api-keys`
+        `/api/api/api-keys`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch API keys');
@@ -3583,7 +4625,7 @@ function App() {
       const fetchCensysCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/censys-company`
+            `/api/scopetarget/${activeTarget.id}/scans/censys-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch Censys Company scans');
@@ -3613,7 +4655,7 @@ function App() {
       const fetchShodanCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/shodan-company`
+            `/api/scopetarget/${activeTarget.id}/scans/shodan-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch Shodan Company scans');
@@ -3650,7 +4692,7 @@ function App() {
       const fetchAmassEnumCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/amass-enum-company`
+            `/api/scopetarget/${activeTarget.id}/scans/amass-enum-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch Amass Enum Company scans');
@@ -3669,7 +4711,7 @@ function App() {
               // Fetch raw results to get actual scanned domains count
               if (mostRecentScan.scan_id) {
                 const rawResultsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentScan.scan_id}/raw-results`
+                  `/api/amass-enum-company/${mostRecentScan.scan_id}/raw-results`
                 );
                 if (rawResultsResponse.ok) {
                   const rawResults = await rawResultsResponse.json();
@@ -3682,7 +4724,7 @@ function App() {
 
                 // Fetch cloud domains for the main card display
                 const cloudDomainsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentScan.scan_id}/cloud-domains`
+                  `/api/amass-enum-company/${mostRecentScan.scan_id}/cloud-domains`
                 );
                 if (cloudDomainsResponse.ok) {
                   const cloudDomains = await cloudDomainsResponse.json();
@@ -3715,7 +4757,7 @@ function App() {
       const fetchDNSxCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/dnsx-company`
+            `/api/scopetarget/${activeTarget.id}/scans/dnsx-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch DNSx Company scans');
@@ -3741,7 +4783,7 @@ function App() {
 
                 // Fetch DNS records for the main card display
                 const dnsRecordsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/dnsx-company/${mostRecentScan.scan_id}/dns-records`
+                  `/api/dnsx-company/${mostRecentScan.scan_id}/dns-records`
                 );
                 if (dnsRecordsResponse.ok) {
                   const dnsRecords = await dnsRecordsResponse.json();
@@ -3813,6 +4855,18 @@ function App() {
 
   useEffect(() => {
     if (activeTarget && activeTarget.type === 'URL') {
+      monitorGoSpiderURLScanStatus(
+        activeTarget,
+        setGoSpiderURLScans,
+        setMostRecentGoSpiderURLScan,
+        setIsGoSpiderURLScanning,
+        setMostRecentGoSpiderURLScanStatus
+      );
+    }
+  }, [activeTarget]);
+
+  useEffect(() => {
+    if (activeTarget && activeTarget.type === 'URL') {
       monitorFFUFURLScanStatus(
         activeTarget,
         setFFUFURLScans,
@@ -3829,7 +4883,7 @@ function App() {
       const fetchKatanaCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/katana-company`
+            `/api/scopetarget/${activeTarget.id}/scans/katana-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch Katana Company scans');
@@ -3845,7 +4899,7 @@ function App() {
               // Fetch accumulated cloud assets from the backend API
               try {
                 const assetsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/katana-company/${mostRecentScan.scan_id}/cloud-assets`
+                  `/api/katana-company/${mostRecentScan.scan_id}/cloud-assets`
                 );
                 if (assetsResponse.ok) {
                   const assets = await assetsResponse.json();
@@ -3871,10 +4925,13 @@ function App() {
     }
   }, [activeTarget]);
 
-  // Nuclei scans useEffect
   useEffect(() => {
     if (activeTarget) {
       loadNucleiConfig();
+      loadHttpxConfig();
+      if (activeTarget.type === 'Wildcard') {
+        loadWildcardNucleiConfig();
+      }
     }
   }, [activeTarget]);
 
@@ -3963,6 +5020,16 @@ function App() {
     );
   };
 
+  const startGoSpiderURLScan = () => {
+    initiateGoSpiderURLScan(
+      activeTarget,
+      setIsGoSpiderURLScanning,
+      setGoSpiderURLScans,
+      setMostRecentGoSpiderURLScan,
+      setMostRecentGoSpiderURLScanStatus
+    );
+  };
+
   const startFFUFURLScan = () => {
     initiateFFUFURLScan(
       activeTarget,
@@ -3973,16 +5040,188 @@ function App() {
     );
   };
 
+  const startArjunScan = () => {
+    initiateArjunScan(
+      activeTarget,
+      setIsArjunScanning,
+      setArjunScans,
+      setMostRecentArjunScan,
+      setMostRecentArjunScanStatus
+    );
+  };
+
+  const startParamethScan = () => {
+    initiateParamethScan(
+      activeTarget,
+      setIsParamethScanning,
+      setParamethScans,
+      setMostRecentParamethScan,
+      setMostRecentParamethScanStatus
+    );
+  };
+
+  const startX8Scan = () => {
+    initiateX8Scan(
+      activeTarget,
+      setIsX8Scanning,
+      setX8Scans,
+      setMostRecentX8Scan,
+      setMostRecentX8ScanStatus
+    );
+  };
+
   const handleOpenKatanaURLResultsModal = () => setShowKatanaURLResultsModal(true);
   const handleCloseKatanaURLResultsModal = () => setShowKatanaURLResultsModal(false);
   const handleOpenLinkFinderURLResultsModal = () => setShowLinkFinderURLResultsModal(true);
   const handleCloseLinkFinderURLResultsModal = () => setShowLinkFinderURLResultsModal(false);
   const handleOpenWaybackURLsResultsModal = () => setShowWaybackURLsResultsModal(true);
   const handleCloseWaybackURLsResultsModal = () => setShowWaybackURLsResultsModal(false);
+  
+  const handleOpenArjunConfigModal = () => setShowArjunConfigModal(true);
+  const handleCloseArjunConfigModal = () => setShowArjunConfigModal(false);
+  const handleOpenArjunResultsModal = () => setShowArjunResultsModal(true);
+  const handleCloseArjunResultsModal = () => setShowArjunResultsModal(false);
+  
+  const handleOpenParamethConfigModal = () => setShowParamethConfigModal(true);
+  const handleCloseParamethConfigModal = () => setShowParamethConfigModal(false);
+  const handleOpenParamethResultsModal = () => setShowParamethResultsModal(true);
+  const handleCloseParamethResultsModal = () => setShowParamethResultsModal(false);
+  
+  const handleOpenX8ConfigModal = () => setShowX8ConfigModal(true);
+  const handleCloseX8ConfigModal = () => setShowX8ConfigModal(false);
+  const handleOpenX8ResultsModal = () => setShowX8ResultsModal(true);
+  const handleCloseX8ResultsModal = () => setShowX8ResultsModal(false);
   const handleOpenGAUURLResultsModal = () => setShowGAUURLResultsModal(true);
   const handleCloseGAUURLResultsModal = () => setShowGAUURLResultsModal(false);
+  const handleOpenGoSpiderURLResultsModal = () => setShowGoSpiderURLResultsModal(true);
+  const handleCloseGoSpiderURLResultsModal = () => setShowGoSpiderURLResultsModal(false);
   const handleOpenFFUFURLResultsModal = () => setShowFFUFURLResultsModal(true);
   const handleCloseFFUFURLResultsModal = () => setShowFFUFURLResultsModal(false);
+  const handleOpenManualCrawlResultsModal = async () => {
+    setShowManualCrawlResultsModal(true);
+    if (activeTarget) {
+      checkManualCrawlConnection();
+      loadManualCrawlMetrics();
+    }
+  };
+  const handleCloseManualCrawlResultsModal = () => setShowManualCrawlResultsModal(false);
+  
+  const handleOpenExtensionInstallModal = () => setShowExtensionInstallModal(true);
+  const handleCloseExtensionInstallModal = () => setShowExtensionInstallModal(false);
+
+  const handleConsolidateEndpoints = async () => {
+    if (!activeTarget) return;
+    
+    setIsConsolidatingEndpoints(true);
+    try {
+      const response = await fetch(`/api/consolidated-endpoints/${activeTarget.id}/consolidate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setConsolidatedEndpointCount(data.endpoint_count || 0);
+      }
+    } catch (err) {
+      console.error('Error consolidating endpoints:', err);
+    } finally {
+      setIsConsolidatingEndpoints(false);
+    }
+  };
+
+  const handleOpenManageEndpointsModal = async () => {
+    setShowManageEndpointsModal(true);
+    if (activeTarget) {
+      loadConsolidatedEndpointCount();
+    }
+  };
+
+  const handleCloseManageEndpointsModal = () => setShowManageEndpointsModal(false);
+
+  const loadConsolidatedEndpointCount = async () => {
+    if (!activeTarget) return;
+    
+    try {
+      const response = await fetch(`/api/consolidated-endpoints/${activeTarget.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setConsolidatedEndpointCount(data.length || 0);
+      }
+    } catch (err) {
+      console.error('Error loading consolidated endpoint count:', err);
+    }
+  };
+  
+  const handleOpenTargetUrl = () => {
+    if (activeTarget && activeTarget.scope_target) {
+      window.open(activeTarget.scope_target, '_blank');
+    }
+  };
+
+  const loadManualCrawlMetrics = async () => {
+    if (!activeTarget) {
+      setManualCrawlSessionCount(0);
+      setManualCrawlEndpointCount(0);
+      return;
+    }
+    
+    try {
+      const [sessionsResponse, endpointsResponse] = await Promise.all([
+        fetch(`/api/manual-crawl/sessions/${activeTarget.id}`),
+        fetch(`/api/manual-crawl/endpoints/${activeTarget.id}`)
+      ]);
+      
+      if (sessionsResponse.ok) {
+        const sessions = await sessionsResponse.json();
+        setManualCrawlSessionCount(sessions?.length || 0);
+      } else {
+        setManualCrawlSessionCount(0);
+      }
+      
+      if (endpointsResponse.ok) {
+        const endpoints = await endpointsResponse.json();
+        setManualCrawlEndpointCount(endpoints?.length || 0);
+      } else {
+        setManualCrawlEndpointCount(0);
+      }
+    } catch (err) {
+      console.error('Error loading manual crawl metrics:', err);
+      setManualCrawlSessionCount(0);
+      setManualCrawlEndpointCount(0);
+    }
+  };
+
+  const checkManualCrawlConnection = async () => {
+    if (!activeTarget) return;
+    try {
+      const response = await fetch(`/api/manual-crawl/sessions/${activeTarget.id}`);
+      if (response.ok) {
+        const sessions = await response.json();
+        const hasActive = Array.isArray(sessions) && sessions.some(s => s.status === 'active');
+        setManualCrawlConnected(hasActive);
+      } else {
+        setManualCrawlConnected(false);
+      }
+    } catch (err) {
+      console.error('Error checking manual crawl connection:', err);
+      setManualCrawlConnected(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTarget) {
+      loadManualCrawlMetrics();
+      if (activeTarget.type === 'URL') {
+        checkManualCrawlConnection();
+        const interval = setInterval(checkManualCrawlConnection, 15000);
+        return () => clearInterval(interval);
+      }
+    } else {
+      setManualCrawlEndpointCount(0);
+      setManualCrawlSessionCount(0);
+    }
+  }, [activeTarget]);
   const handleOpenApplicationQuestionsModal = () => setShowApplicationQuestionsModal(true);
   const handleCloseApplicationQuestionsModal = () => setShowApplicationQuestionsModal(false);
   const handleOpenMechanismsModal = () => setShowMechanismsModal(true);
@@ -3996,7 +5235,7 @@ function App() {
     if (activeTarget) {
       try {
         const mechanismsResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/mechanisms/${activeTarget.id}/examples`
+          `/api/mechanisms/${activeTarget.id}/examples`
         );
         if (mechanismsResponse.ok) {
           const mechanismsData = await mechanismsResponse.json();
@@ -4009,7 +5248,7 @@ function App() {
       
       try {
         const objectsResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/notable-objects/${activeTarget.id}`
+          `/api/notable-objects/${activeTarget.id}`
         );
         if (objectsResponse.ok) {
           const objectsData = await objectsResponse.json();
@@ -4022,7 +5261,7 @@ function App() {
 
       try {
         const controlsResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/security-controls/${activeTarget.id}/notes`
+          `/api/security-controls/${activeTarget.id}/notes`
         );
         if (controlsResponse.ok) {
           const controlsData = await controlsResponse.json();
@@ -4135,7 +5374,7 @@ function App() {
         const fetchDNSxCompanyScansRefresh = async () => {
           try {
             const response = await fetch(
-              `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/dnsx-company`
+              `/api/scopetarget/${activeTarget.id}/scans/dnsx-company`
             );
             if (!response.ok) {
               throw new Error('Failed to fetch DNSx Company scans');
@@ -4159,7 +5398,7 @@ function App() {
         const fetchKatanaCompanyScansRefresh = async () => {
           try {
             const response = await fetch(
-              `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/katana-company`
+              `/api/scopetarget/${activeTarget.id}/scans/katana-company`
             );
             if (!response.ok) {
               throw new Error('Failed to fetch Katana Company scans');
@@ -4175,7 +5414,7 @@ function App() {
                 // Fetch accumulated cloud assets for the card count
                 try {
                   const assetsResponse = await fetch(
-                    `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/katana-company/target/${activeTarget.id}/cloud-assets`
+                    `/api/katana-company/target/${activeTarget.id}/cloud-assets`
                   );
                   if (assetsResponse.ok) {
                     const assets = await assetsResponse.json();
@@ -4219,7 +5458,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/dnsx-config/${activeTarget.id}`
+        `/api/dnsx-config/${activeTarget.id}`
       );
       
       if (response.ok) {
@@ -4235,7 +5474,7 @@ function App() {
           try {
             // Fetch all scope targets to find wildcard targets
             const scopeTargetsResponse = await fetch(
-              `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/read`
+              `/api/scopetarget/read`
             );
             
             if (scopeTargetsResponse.ok) {
@@ -4260,7 +5499,7 @@ function App() {
                 for (const wildcardTarget of wildcardTargets) {
                   try {
                     const liveWebServersResponse = await fetch(
-                      `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/scope-targets/${wildcardTarget.id}/target-urls`
+                      `/api/api/scope-targets/${wildcardTarget.id}/target-urls`
                     );
                     
                     if (liveWebServersResponse.ok) {
@@ -4330,7 +5569,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/dnsx-config/${activeTarget.id}`
+        `/api/dnsx-config/${activeTarget.id}`
       );
       
       if (!response.ok) {
@@ -4383,7 +5622,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-config/${activeTarget.id}`
+        `/api/amass-enum-config/${activeTarget.id}`
       );
       
       if (!response.ok) {
@@ -4436,7 +5675,7 @@ function App() {
       const fetchAmassEnumCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/amass-enum-company`
+            `/api/scopetarget/${activeTarget.id}/scans/amass-enum-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch Amass Enum Company scans');
@@ -4455,7 +5694,7 @@ function App() {
               // Fetch raw results to get actual scanned domains count
               if (mostRecentScan.scan_id) {
                 const rawResultsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentScan.scan_id}/raw-results`
+                  `/api/amass-enum-company/${mostRecentScan.scan_id}/raw-results`
                 );
                 if (rawResultsResponse.ok) {
                   const rawResults = await rawResultsResponse.json();
@@ -4468,7 +5707,7 @@ function App() {
 
                 // Fetch cloud domains for the main card display
                 const cloudDomainsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentScan.scan_id}/cloud-domains`
+                  `/api/amass-enum-company/${mostRecentScan.scan_id}/cloud-domains`
                 );
                 if (cloudDomainsResponse.ok) {
                   const cloudDomains = await cloudDomainsResponse.json();
@@ -4501,7 +5740,7 @@ function App() {
       const fetchAmassEnumCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/amass-enum-company`
+            `/api/scopetarget/${activeTarget.id}/scans/amass-enum-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch Amass Enum Company scans');
@@ -4520,7 +5759,7 @@ function App() {
               // Fetch raw results to get actual scanned domains count
               if (mostRecentScan.scan_id) {
                 const rawResultsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentScan.scan_id}/raw-results`
+                  `/api/amass-enum-company/${mostRecentScan.scan_id}/raw-results`
                 );
                 if (rawResultsResponse.ok) {
                   const rawResults = await rawResultsResponse.json();
@@ -4533,7 +5772,7 @@ function App() {
 
                 // Fetch cloud domains for the main card display
                 const cloudDomainsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentScan.scan_id}/cloud-domains`
+                  `/api/amass-enum-company/${mostRecentScan.scan_id}/cloud-domains`
                 );
                 if (cloudDomainsResponse.ok) {
                   const cloudDomains = await cloudDomainsResponse.json();
@@ -4566,7 +5805,7 @@ function App() {
       const fetchAmassEnumCompanyScans = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/scopetarget/${activeTarget.id}/scans/amass-enum-company`
+            `/api/scopetarget/${activeTarget.id}/scans/amass-enum-company`
           );
           if (!response.ok) {
             throw new Error('Failed to fetch Amass Enum Company scans');
@@ -4585,7 +5824,7 @@ function App() {
               // Fetch raw results to get actual scanned domains count
               if (mostRecentScan.scan_id) {
                 const rawResultsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentScan.scan_id}/raw-results`
+                  `/api/amass-enum-company/${mostRecentScan.scan_id}/raw-results`
                 );
                 if (rawResultsResponse.ok) {
                   const rawResults = await rawResultsResponse.json();
@@ -4598,7 +5837,7 @@ function App() {
 
                 // Fetch cloud domains for the main card display
                 const cloudDomainsResponse = await fetch(
-                  `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/amass-enum-company/${mostRecentScan.scan_id}/cloud-domains`
+                  `/api/amass-enum-company/${mostRecentScan.scan_id}/cloud-domains`
                 );
                 if (cloudDomainsResponse.ok) {
                   const cloudDomains = await cloudDomainsResponse.json();
@@ -4634,6 +5873,8 @@ function App() {
         onToolsClick={handleOpenToolsModal}
         onExportClick={handleOpenExportModal}
         onImportClick={handleOpenImportModal}
+        onGlobalScansClick={() => setShowGlobalScansModal(true)}
+        isGlobalScanRunning={isWildfireRunning || isSlowburnRunning}
       />
 
       <ToastContainer 
@@ -4696,6 +5937,24 @@ function App() {
         handleDelete={handleDelete}
       />
 
+      <GlobalScansModal
+        show={showGlobalScansModal}
+        handleClose={() => setShowGlobalScansModal(false)}
+        scopeTargets={scopeTargets}
+        isWildfireRunning={isWildfireRunning}
+        wildfireProgress={wildfireProgress}
+        onStartWildfire={startWildfire}
+        onCancelWildfire={cancelWildfire}
+        isSlowburnRunning={isSlowburnRunning}
+        slowburnProgress={slowburnProgress}
+        onStartSlowburn={startSlowburn}
+        onCancelSlowburn={cancelSlowburn}
+        setShowToast={setShowToast}
+        autoScanCurrentStep={autoScanCurrentStep}
+        consolidatedCount={consolidatedCount}
+        mostRecentHttpxScan={mostRecentHttpxScan}
+      />
+
       <SettingsModal
         show={showSettingsModal}
         handleClose={handleCloseSettingsModal}
@@ -4706,6 +5965,8 @@ function App() {
       <ToolsModal
         show={showToolsModal}
         handleClose={handleCloseToolsModal}
+        initialTab={toolsModalInitialTab}
+        initialUrls={toolsModalInitialUrls}
       />
 
       <Suspense fallback={<div />}>
@@ -4722,6 +5983,13 @@ function App() {
           onSuccess={handleImportSuccess}
           showBackButton={scopeTargets.length === 0}
           onBackClick={handleBackToWelcome}
+        />
+      </Suspense>
+
+      <Suspense fallback={<div />}>
+        <LaunchPadModal
+          show={showLaunchPadModal}
+          handleClose={handleCloseLaunchPadModal}
         />
       </Suspense>
 
@@ -4840,6 +6108,7 @@ function App() {
         showHttpxResultsModal={showHttpxResultsModal}
         handleCloseHttpxResultsModal={handleCloseHttpxResultsModal}
         httpxResults={mostRecentHttpxScan}
+        onPopulateBurp={handleOpenToolsModalWithUrls}
       />
 
       <GauResultsModal
@@ -4865,6 +6134,47 @@ function App() {
         handleCloseCTLResultsModal={handleCloseCTLResultsModal}
         ctlResults={mostRecentCTLScan}
       />
+
+      <Modal show={showCTLApiErrorModal} onHide={() => setShowCTLApiErrorModal(false)} centered>
+        <Modal.Header closeButton className="bg-dark border-secondary">
+          <Modal.Title className="d-flex align-items-center gap-2">
+            <i className="bi bi-exclamation-triangle-fill" style={{ color: '#ff9800' }} />
+            <span className="text-white">CTL Scan — API Issue</span>
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="bg-dark text-white">
+          <p>
+            The CTL (Certificate Transparency Log) scan works by making an HTTP request to{' '}
+            <a href="https://crt.sh" target="_blank" rel="noopener noreferrer" className="text-danger">crt.sh</a>,
+            a public API that indexes SSL/TLS certificates from Certificate Transparency logs.
+          </p>
+          <p>
+            The scan failed because the crt.sh API returned an error
+            {(() => {
+              const errScan = mostRecentCTLScan?.status === 'error' ? mostRecentCTLScan
+                : mostRecentCTLCompanyScan?.status === 'error' ? mostRecentCTLCompanyScan : null;
+              if (errScan?.stderr) {
+                const match = errScan.stderr.match(/status code[:\s]*(\d+)/i);
+                if (match) return <> (<code>HTTP {match[1]}</code>)</>;
+              }
+              return null;
+            })()}.
+            This typically happens when:
+          </p>
+          <ul>
+            <li><strong>Rate limiting (429)</strong> — Too many requests have been made to crt.sh in a short period.</li>
+            <li><strong>Server overload (503)</strong> — The crt.sh service is temporarily overwhelmed by traffic.</li>
+            <li><strong>Timeout</strong> — The API took too long to respond for a large domain.</li>
+          </ul>
+          <p className="mb-0">
+            This is not a bug in the framework. Simply <strong>wait a few minutes and try the scan again</strong>.
+            The crt.sh API is a free community resource and occasionally struggles under heavy load.
+          </p>
+        </Modal.Body>
+        <Modal.Footer className="bg-dark border-secondary">
+          <Button variant="outline-danger" onClick={() => setShowCTLApiErrorModal(false)}>Got it</Button>
+        </Modal.Footer>
+      </Modal>
 
       <CTLCompanyResultsModal
         showCTLCompanyResultsModal={showCTLCompanyResultsModal}
@@ -4952,6 +6262,13 @@ function App() {
         setShowToast={setShowToast}
       />
 
+      <ConfigureHttpxModal
+        show={showConfigureHttpxModal}
+        handleClose={handleCloseConfigureHttpxModal}
+        httpxConfig={httpxScanConfig}
+        onSaveConfig={handleSaveHttpxConfig}
+      />
+
       <CeWLResultsModal
         showCeWLResultsModal={showCeWLResultsModal}
         handleCloseCeWLResultsModal={handleCloseCeWLResultsModal}
@@ -4974,6 +6291,7 @@ function App() {
         showScreenshotResultsModal={showScreenshotResultsModal}
         handleCloseScreenshotResultsModal={handleCloseScreenshotResultsModal}
         activeTarget={activeTarget}
+        onPopulateBurp={handleOpenToolsModalWithUrls}
       />
 
       <Fade in={fadeIn}>
@@ -5213,7 +6531,9 @@ function App() {
                       onResults: handleOpenCTLCompanyResultsModal,
                       onHistory: handleOpenCTLCompanyHistoryModal,
                       resultCount: mostRecentCTLCompanyScan && mostRecentCTLCompanyScan.result ? 
-                        mostRecentCTLCompanyScan.result.split('\n').filter(line => line.trim()).length : 0
+                        mostRecentCTLCompanyScan.result.split('\n').filter(line => line.trim()).length : 0,
+                      apiError: mostRecentCTLCompanyScanStatus === 'error',
+                      onApiError: () => setShowCTLApiErrorModal(true)
                     },
                     { 
                       name: 'Reverse Whois', 
@@ -5231,10 +6551,18 @@ function App() {
                     <Col key={index}>
                       <Card className="shadow-sm h-100 text-center" style={{ minHeight: '250px' }}>
                         <Card.Body className="d-flex flex-column">
-                          <Card.Title className="text-danger mb-3">
+                          <Card.Title className="text-danger mb-3 d-flex align-items-center justify-content-center gap-2">
                             <a href={tool.link} className="text-danger text-decoration-none">
                               {tool.name}
                             </a>
+                            {tool.apiError && (
+                              <i
+                                className="bi bi-exclamation-triangle-fill"
+                                style={{ color: '#ff9800', cursor: 'pointer', fontSize: '1.1rem' }}
+                                title="API error — click for details"
+                                onClick={(e) => { e.stopPropagation(); tool.onApiError(); }}
+                              />
+                            )}
                           </Card.Title>
                           <Card.Text className="text-white small fst-italic">
                             {tool.description}
@@ -5863,6 +7191,13 @@ function App() {
                         <Button 
                           variant="outline-danger" 
                           className="flex-fill" 
+                          onClick={handleOpenManageAttackSurfaceModal}
+                        >
+                          Manage
+                        </Button>
+                        <Button 
+                          variant="outline-danger" 
+                          className="flex-fill" 
                           onClick={handleInvestigateFQDNs}
                           disabled={isInvestigatingFQDNs}
                         >
@@ -6059,7 +7394,9 @@ function App() {
                       onScan: startCTLScan,
                       onResults: handleOpenCTLResultsModal,
                       resultCount: mostRecentCTLScan && mostRecentCTLScan.result ? 
-                        mostRecentCTLScan.result.split('\n').filter(line => line.trim()).length : 0
+                        mostRecentCTLScan.result.split('\n').filter(line => line.trim()).length : 0,
+                      apiError: mostRecentCTLScanStatus === 'error',
+                      onApiError: () => setShowCTLApiErrorModal(true)
                     },
                     { name: 'Subfinder', 
                       link: 'https://github.com/projectdiscovery/subfinder',
@@ -6075,10 +7412,18 @@ function App() {
                     <Col key={index}>
                       <Card className="shadow-sm h-100 text-center" style={{ minHeight: '250px' }}>
                         <Card.Body className="d-flex flex-column">
-                          <Card.Title className="text-danger mb-3">
+                          <Card.Title className="text-danger mb-3 d-flex align-items-center justify-content-center gap-2">
                             <a href={tool.link} className="text-danger text-decoration-none">
                               {tool.name}
                             </a>
+                            {tool.apiError && (
+                              <i
+                                className="bi bi-exclamation-triangle-fill"
+                                style={{ color: '#ff9800', cursor: 'pointer', fontSize: '1.1rem' }}
+                                title="API error — click for details"
+                                onClick={(e) => { e.stopPropagation(); tool.onApiError(); }}
+                              />
+                            )}
                           </Card.Title>
                           <Card.Text className="text-white small fst-italic">
                             {tool.name === 'GAU' ? 'Get All URLs - Fetch known URLs from AlienVault\'s Open Threat Exchange, the Wayback Machine, and Common Crawl.' : 'A subdomain enumeration tool that uses OSINT techniques.'}
@@ -6165,6 +7510,13 @@ function App() {
                             disabled={consolidatedSubdomains.length === 0}
                           >
                             Unique Subdomains
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            className="flex-fill"
+                            onClick={handleOpenConfigureHttpxModal}
+                          >
+                            {httpxScanConfig ? <><i className="bi bi-gear-fill me-1"></i>HTTPX Config</> : <><i className="bi bi-gear me-1"></i>Configure HTTPX</>}
                           </Button>
                           <Button
                             variant="outline-danger"
@@ -6302,6 +7654,13 @@ function App() {
                           <Button
                             variant="outline-danger"
                             className="flex-fill"
+                            onClick={handleOpenConfigureHttpxModal}
+                          >
+                            {httpxScanConfig ? <><i className="bi bi-gear-fill me-1"></i>HTTPX Config</> : <><i className="bi bi-gear me-1"></i>Configure HTTPX</>}
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            className="flex-fill"
                             onClick={startHttpxScan}
                             disabled={isHttpxScanning || mostRecentHttpxScanStatus === "pending" || consolidatedSubdomains.length === 0}
                           >
@@ -6433,6 +7792,13 @@ function App() {
                           <Button
                             variant="outline-danger"
                             className="flex-fill"
+                            onClick={handleOpenConfigureHttpxModal}
+                          >
+                            {httpxScanConfig ? <><i className="bi bi-gear-fill me-1"></i>HTTPX Config</> : <><i className="bi bi-gear me-1"></i>Configure HTTPX</>}
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            className="flex-fill"
                             onClick={startHttpxScan}
                             disabled={isHttpxScanning || mostRecentHttpxScanStatus === "pending" || consolidatedSubdomains.length === 0}
                           >
@@ -6453,81 +7819,272 @@ function App() {
                 <Row className="mb-4">
                   <Col>
                     <Card className="shadow-sm" style={{ minHeight: '250px' }}>
-                      <Card.Body className="d-flex flex-column justify-content-between text-center">
+                      <Card.Body className="d-flex flex-column justify-content-between">
                         <div>
-                          <Card.Title className="text-danger fs-3 mb-3">Add URL Scope Target</Card.Title>
-                          <Card.Text className="text-white small fst-italic">
-                            We now have a list of unique subdomains pointing to live web servers. The next step is to take screenshots of each web application and gather data to identify the target that will give us the greatest ROI as a bug bounty hunter. Focus on signs that the target may have vulnerabilities, may not be maintained, or offers a large attack surface.
+                          <Card.Title className="text-danger fs-3 mb-3 text-center">MetaData Reconnaissance</Card.Title>
+                          <Card.Text className="text-white small fst-italic text-center mb-3">
+                            Gather comprehensive intelligence about each web application to identify high-value targets for bug bounty hunting.
                           </Card.Text>
-                          <div className="d-flex justify-content-around mt-4 mb-4">
-                            <div className="text-center px-4">
-                              <div className="digital-clock text-danger fw-bold" style={{
-                                fontFamily: "'Digital-7', monospace",
-                                fontSize: "2.5rem",
-                                textShadow: "0 0 10px rgba(255, 0, 0, 0.5)",
-                                letterSpacing: "2px"
-                              }}>
-                                {mostRecentNucleiScreenshotScan ? 
-                                  Math.floor((new Date() - new Date(mostRecentNucleiScreenshotScan.created_at)) / (1000 * 60 * 60 * 24)) : 
-                                  '∞'}
+                          
+                          {/* Show alert if viewing data from cancelled scan */}
+                          {mostRecentMetaDataScan && mostRecentMetaDataScan.status === 'cancelled' && (
+                            <Alert variant="warning" className="small mb-3 py-2">
+                              <i className="bi bi-info-circle me-2"></i>
+                              <strong>Partial Data:</strong> This scan was cancelled. You can view the data collected before cancellation.
+                            </Alert>
+                          )}
+                          
+                          {/* MetaData Scan Progress Section */}
+                          <div className="mb-3">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <div className="d-flex flex-column">
+                                <div className="d-flex align-items-center mb-1">
+                                  <span className={`fw-bold text-${
+                                    mostRecentMetaDataScanStatus === 'running' || mostRecentMetaDataScanStatus === 'pending' ? 'danger' : 
+                                    mostRecentMetaDataScanStatus === 'cancelling' ? 'warning' :
+                                    mostRecentMetaDataScanStatus === 'success' ? 'success' : 
+                                    mostRecentMetaDataScanStatus === 'cancelled' ? 'secondary' :
+                                    mostRecentMetaDataScanStatus === 'error' || mostRecentMetaDataScanStatus === 'failed' ? 'danger' :
+                                    'secondary'
+                                  }`}>
+                                    Status: {
+                                      mostRecentMetaDataScanStatus === 'running' || mostRecentMetaDataScanStatus === 'pending' ? 'Running' :
+                                      mostRecentMetaDataScanStatus === 'cancelling' ? 'Cancelling' :
+                                      mostRecentMetaDataScanStatus === 'success' ? 'Completed' :
+                                      mostRecentMetaDataScanStatus === 'cancelled' ? 'Cancelled' :
+                                      mostRecentMetaDataScanStatus === 'error' || mostRecentMetaDataScanStatus === 'failed' ? 'Failed' :
+                                      'Ready'
+                                    }
+                                  </span>
+                                  {(mostRecentMetaDataScanStatus === 'running' || mostRecentMetaDataScanStatus === 'pending' || mostRecentMetaDataScanStatus === 'cancelling') && 
+                                    <Spinner animation="border" size="sm" variant="danger" className="ms-2" />
+                                  }
+                                </div>
+                                {mostRecentMetaDataScan && mostRecentMetaDataScan.created_at && (
+                                  <div className="mb-1">
+                                    <span className="text-white-50 small">Start Time: </span>
+                                    <span className="text-white small">{new Date(mostRecentMetaDataScan.created_at).toLocaleTimeString()}</span>
+                                  </div>
+                                )}
+                                {(mostRecentMetaDataScanStatus === 'running' || mostRecentMetaDataScanStatus === 'pending' || mostRecentMetaDataScanStatus === 'cancelling') && mostRecentMetaDataScan && mostRecentMetaDataScan.created_at && (
+                                  <div className="mb-1">
+                                    <span className="text-white-50 small">Elapsed: </span>
+                                    <span className="text-white small">{metaDataElapsedTime}</span>
+                                  </div>
+                                )}
                               </div>
-                              <div className="text-white small mt-2">day{mostRecentNucleiScreenshotScan && 
-                                Math.floor((new Date() - new Date(mostRecentNucleiScreenshotScan.created_at)) / (1000 * 60 * 60 * 24)) !== 1 ? 's' : ''} since last Screenshots</div>
-                            </div>
-                            <div className="text-center px-4">
-                              <div className="digital-clock text-danger fw-bold" style={{
-                                fontFamily: "'Digital-7', monospace",
-                                fontSize: "2.5rem",
-                                textShadow: "0 0 10px rgba(255, 0, 0, 0.5)",
-                                letterSpacing: "2px"
-                              }}>
-                                {mostRecentMetaDataScan ? 
-                                  Math.floor((new Date() - new Date(mostRecentMetaDataScan.created_at)) / (1000 * 60 * 60 * 24)) : 
-                                  '∞'}
+                              <div className="text-end">
+                                {mostRecentMetaDataScan && mostRecentMetaDataScan.execution_time && (
+                                  <div className="text-white-50 small">
+                                    Duration: {mostRecentMetaDataScan.execution_time}
+                                  </div>
+                                )}
                               </div>
-                              <div className="text-white small mt-2">day{mostRecentMetaDataScan && 
-                                Math.floor((new Date() - new Date(mostRecentMetaDataScan.created_at)) / (1000 * 60 * 60 * 24)) !== 1 ? 's' : ''} since last MetaData</div>
                             </div>
+                            
+                            {/* Current Step and URL Display */}
+                            {(mostRecentMetaDataScanStatus === 'running' || mostRecentMetaDataScanStatus === 'pending' || mostRecentMetaDataScanStatus === 'cancelling') && (
+                              <div className="mt-2 mb-2">
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <div className="text-white-50 small">
+                                    <span className={`text-${mostRecentMetaDataScanStatus === 'cancelling' ? 'warning' : 'danger'}`}>●</span>
+                                    {mostRecentMetaDataScan && mostRecentMetaDataScan.current_step && (
+                                      <span className="ms-2">
+                                        {mostRecentMetaDataScan.current_step === 'initializing' ? 'Initializing scan...' :
+                                         mostRecentMetaDataScan.current_step === 'screenshots' ? 'Capturing screenshots' :
+                                         mostRecentMetaDataScan.current_step === 'katana' ? 'Web crawling with Katana' :
+                                         mostRecentMetaDataScan.current_step === 'ssl' ? 'Analyzing SSL/TLS certificates' :
+                                         mostRecentMetaDataScan.current_step === 'technology' ? 'Detecting technologies' :
+                                         mostRecentMetaDataScan.current_step === 'ffuf' ? 'Directory fuzzing' :
+                                         mostRecentMetaDataScan.current_step}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {mostRecentMetaDataScan && mostRecentMetaDataScan.current_url && (
+                                  <div className="text-white-50 small mt-1" style={{ 
+                                    overflow: 'hidden', 
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }}>
+                                    <span className="text-secondary">↳</span> {mostRecentMetaDataScan.current_url}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Progress Bar */}
+                            {(mostRecentMetaDataScanStatus === 'running' || mostRecentMetaDataScanStatus === 'pending' || mostRecentMetaDataScanStatus === 'cancelling') && mostRecentMetaDataScan && (
+                              <div className="mt-2">
+                                <div className="d-flex justify-content-between mb-1">
+                                  <span className="text-white-50 small">Overall Progress</span>
+                                  <span className="text-white small">
+                                    {mostRecentMetaDataScan.total_urls > 0 
+                                      ? (() => {
+                                          let config = null;
+                                          try {
+                                            config = mostRecentMetaDataScan.config ? JSON.parse(mostRecentMetaDataScan.config) : null;
+                                          } catch (e) {
+                                            config = null;
+                                          }
+                                          
+                                          const enabledSteps = config?.steps || {
+                                            screenshots: true,
+                                            technology: true,
+                                            ssl: true,
+                                            katana: false,
+                                            ffuf: false
+                                          };
+                                          
+                                        const allStepWeights = {
+                                          'initializing': 2,
+                                          'screenshots': 25,
+                                          'katana': 30,
+                                          'technology': 15,
+                                          'ssl': 20,
+                                          'ffuf': 30
+                                        };
+                                        
+                                        const activeSteps = Object.keys(enabledSteps).filter(key => enabledSteps[key] && allStepWeights[key]);
+                                        const totalWeight = activeSteps.reduce((sum, step) => sum + allStepWeights[step], 0) + allStepWeights['initializing'];
+                                        
+                                        const normalizedWeights = {};
+                                        normalizedWeights['initializing'] = (allStepWeights['initializing'] / totalWeight) * 95;
+                                        activeSteps.forEach(step => {
+                                          normalizedWeights[step] = (allStepWeights[step] / totalWeight) * 95;
+                                        });
+                                        
+                                        const stepOrder = ['initializing', 'screenshots', 'katana', 'ssl', 'technology', 'ffuf'];
+                                        const activeStepOrder = ['initializing'].concat(stepOrder.slice(1).filter(s => activeSteps.includes(s)));
+                                        
+                                        const completedStepsProgress = {};
+                                        let accumulated = 0;
+                                        activeStepOrder.forEach(step => {
+                                          completedStepsProgress[step] = accumulated;
+                                          accumulated += normalizedWeights[step];
+                                        });
+                                        
+                                        const currentStep = mostRecentMetaDataScan.current_step || 'initializing';
+                                        const baseProgress = completedStepsProgress[currentStep] || 0;
+                                        const currentStepWeight = normalizedWeights[currentStep] || 0;
+                                        const stepProgress = mostRecentMetaDataScan.processed_urls > 0 
+                                          ? (mostRecentMetaDataScan.processed_urls / mostRecentMetaDataScan.total_urls) * currentStepWeight
+                                          : 0;
+                                        
+                                        return Math.min(Math.round(baseProgress + stepProgress), 95);
+                                        })()
+                                      : 5}%
+                                  </span>
+                                </div>
+                                <ProgressBar 
+                                  now={mostRecentMetaDataScan.total_urls > 0 
+                                    ? (() => {
+                                        let config = null;
+                                        try {
+                                          config = mostRecentMetaDataScan.config ? JSON.parse(mostRecentMetaDataScan.config) : null;
+                                        } catch (e) {
+                                          config = null;
+                                        }
+                                        
+                                        const enabledSteps = config?.steps || {
+                                          screenshots: true,
+                                          technology: true,
+                                          ssl: true,
+                                          katana: false,
+                                          ffuf: false
+                                        };
+                                        
+                                        const allStepWeights = {
+                                          'initializing': 2,
+                                          'screenshots': 25,
+                                          'katana': 30,
+                                          'technology': 15,
+                                          'ssl': 20,
+                                          'ffuf': 30
+                                        };
+                                        
+                                        const activeSteps = Object.keys(enabledSteps).filter(key => enabledSteps[key] && allStepWeights[key]);
+                                        const totalWeight = activeSteps.reduce((sum, step) => sum + allStepWeights[step], 0) + allStepWeights['initializing'];
+                                        
+                                        const normalizedWeights = {};
+                                        normalizedWeights['initializing'] = (allStepWeights['initializing'] / totalWeight) * 95;
+                                        activeSteps.forEach(step => {
+                                          normalizedWeights[step] = (allStepWeights[step] / totalWeight) * 95;
+                                        });
+                                        
+                                        const stepOrder = ['initializing', 'screenshots', 'katana', 'ssl', 'technology', 'ffuf'];
+                                        const activeStepOrder = ['initializing'].concat(stepOrder.slice(1).filter(s => activeSteps.includes(s)));
+                                        
+                                        const completedStepsProgress = {};
+                                        let accumulated = 0;
+                                        activeStepOrder.forEach(step => {
+                                          completedStepsProgress[step] = accumulated;
+                                          accumulated += normalizedWeights[step];
+                                        });
+                                        
+                                        const currentStep = mostRecentMetaDataScan.current_step || 'initializing';
+                                        const baseProgress = completedStepsProgress[currentStep] || 0;
+                                        const currentStepWeight = normalizedWeights[currentStep] || 0;
+                                        const stepProgress = mostRecentMetaDataScan.processed_urls > 0 
+                                          ? (mostRecentMetaDataScan.processed_urls / mostRecentMetaDataScan.total_urls) * currentStepWeight
+                                          : 0;
+                                        
+                                        return Math.min(Math.round(baseProgress + stepProgress), 95);
+                                      })()
+                                    : 5}
+                                  variant={mostRecentMetaDataScanStatus === 'cancelling' ? 'warning' : 'danger'}
+                                  className="bg-dark" 
+                                  style={{ height: '8px' }}
+                                  animated={mostRecentMetaDataScanStatus !== 'cancelling'}
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
+                        
+                        {/* Action Buttons */}
                         <div className="d-flex flex-column gap-3 w-100 mt-3">
                           <div className="d-flex justify-content-between gap-2">
                             <Button variant="outline-danger" className="flex-fill" onClick={handleOpenReconResultsModal}>Recon Results</Button>
                             <Button 
                               variant="outline-danger" 
                               className="flex-fill"
-                              onClick={startNucleiScreenshotScan}
+                              onClick={handleOpenConfigureMetaDataModal}
                               disabled={!mostRecentHttpxScan || 
                                       mostRecentHttpxScan.status !== "success" || 
                                       !httpxScans || 
                                       httpxScans.length === 0}
                             >
-                              <div className="btn-content">
-                                {isNucleiScreenshotScanning || mostRecentNucleiScreenshotScanStatus === "pending" ? (
-                                  <div className="spinner"></div>
-                                ) : 'Take Screenshots'}
-                              </div>
+                              Configure
                             </Button>
                             <Button 
-                              variant="outline-danger" 
+                              variant={(isMetaDataScanning || mostRecentMetaDataScanStatus === "pending" || mostRecentMetaDataScanStatus === "running" || mostRecentMetaDataScanStatus === "cancelling") ? "danger" : "outline-danger"}
                               className="flex-fill"
-                              onClick={handleOpenScreenshotResultsModal}
-                              disabled={!mostRecentNucleiScreenshotScan || mostRecentNucleiScreenshotScan.status !== "success"}
-                            >
-                              View Screenshots
-                            </Button>
-                            <Button 
-                              variant="outline-danger" 
-                              className="flex-fill"
-                              onClick={startMetaDataScan}
-                              disabled={!mostRecentHttpxScan || 
-                                      mostRecentHttpxScan.status !== "success" || 
-                                      !httpxScans || 
-                                      httpxScans.length === 0}
+                              onClick={() => startMetaDataScan()}
+                              disabled={
+                                mostRecentMetaDataScanStatus === "cancelling" ? true :
+                                (isMetaDataScanning || mostRecentMetaDataScanStatus === "pending" || mostRecentMetaDataScanStatus === "running") 
+                                  ? false 
+                                  : (!mostRecentHttpxScan || 
+                                     mostRecentHttpxScan.status !== "success" || 
+                                     !httpxScans || 
+                                     httpxScans.length === 0)
+                              }
+                              style={{
+                                cursor: (isMetaDataScanning || mostRecentMetaDataScanStatus === "pending" || mostRecentMetaDataScanStatus === "running") ? "pointer" : undefined
+                              }}
                             >
                               <div className="btn-content">
-                                {isMetaDataScanning || mostRecentMetaDataScanStatus === "pending" || mostRecentMetaDataScanStatus === "running" ? (
-                                  <div className="spinner"></div>
+                                {mostRecentMetaDataScanStatus === "cancelling" ? (
+                                  <>
+                                    <div className="spinner"></div>
+                                    <span style={{ marginLeft: '8px' }}>Cancelling...</span>
+                                  </>
+                                ) : (isMetaDataScanning || mostRecentMetaDataScanStatus === "pending" || mostRecentMetaDataScanStatus === "running") ? (
+                                  <>
+                                    <div className="spinner"></div>
+                                    <span style={{ marginLeft: '8px' }}>Cancel Scan</span>
+                                  </>
                                 ) : 'Gather Metadata'}
                               </div>
                             </Button>
@@ -6535,7 +8092,9 @@ function App() {
                               variant="outline-danger" 
                               className="flex-fill"
                               onClick={handleOpenMetaDataModal}
-                              disabled={!mostRecentMetaDataScan || mostRecentMetaDataScan.status !== "success"}
+                              disabled={!mostRecentMetaDataScan || 
+                                      (mostRecentMetaDataScan.status !== "success" && 
+                                       mostRecentMetaDataScan.status !== "cancelled")}
                             >
                               View Metadata
                             </Button>
@@ -6543,14 +8102,69 @@ function App() {
                               variant="outline-danger" 
                               className="flex-fill"
                               onClick={handleOpenROIReport}
-                              disabled={!mostRecentNucleiScreenshotScan || 
-                                      mostRecentNucleiScreenshotScan.status !== "success" || 
-                                      !mostRecentMetaDataScan || 
-                                      mostRecentMetaDataScan.status !== "success"}
+                              disabled={!mostRecentMetaDataScan || 
+                                      (mostRecentMetaDataScan.status !== "success" && 
+                                       mostRecentMetaDataScan.status !== "cancelled")}
                             >
                               ROI Report
                             </Button>
                           </div>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+
+                <h4 className="text-secondary mb-3 fs-5">Nuclei Scanning</h4>
+                <HelpMeLearn section="wildcardNucleiScanning" />
+                <Row className="mb-4">
+                  <Col>
+                  <Card className="shadow-sm h-100 text-center" style={{ minHeight: '200px' }}>
+                      <Card.Body className="d-flex flex-column">
+                        <Card.Title className="text-danger fs-4 mb-3">
+                          <a href="https://github.com/projectdiscovery/nuclei" className="text-danger text-decoration-none">
+                            Nuclei Scanning
+                          </a>
+                        </Card.Title>
+                        <Card.Text className="text-white small fst-italic mb-4">
+                          Scan your live web servers for vulnerabilities using Nuclei templates. Configure individual templates, categories, and advanced settings for targeted security testing.
+                        </Card.Text>
+                        <div className="text-danger mb-4">
+                          <div className="row row-cols-4">
+                            <div className="col">
+                              <h3 className="mb-0">{getWildcardNucleiSelectedTargetsCount()}</h3>
+                              <small className="text-white-50">Selected<br/>Targets</small>
+                            </div>
+                            <div className="col">
+                              <h3 className="mb-0">{getWildcardNucleiSelectedTemplatesCount()}</h3>
+                              <small className="text-white-50">Selected<br/>Templates</small>
+                            </div>
+                            <div className="col">
+                              <h3 className="mb-0">{getWildcardNucleiTotalFindings()}</h3>
+                              <small className="text-white-50">Total<br/>Findings</small>
+                            </div>
+                            <div className="col">
+                              <h3 className="mb-0">{getWildcardNucleiImpactfulFindings()}</h3>
+                              <small className="text-white-50">Impactful<br/>Findings</small>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="d-flex justify-content-between mt-auto gap-2">
+                          <Button variant="outline-danger" className="flex-fill" onClick={handleOpenWildcardNucleiHistoryModal}>History</Button>
+                          <Button variant="outline-danger" className="flex-fill" onClick={handleOpenWildcardNucleiConfigModal}>Configure</Button>
+                          <Button 
+                            variant="outline-danger" 
+                            className="flex-fill"
+                            disabled={isWildcardNucleiScanDisabled() || isWildcardNucleiScanning}
+                            onClick={startWildcardNucleiScan}
+                          >
+                            {isWildcardNucleiScanning ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : (
+                              'Scan'
+                            )}
+                          </Button>
+                          <Button variant="outline-danger" className="flex-fill" onClick={handleOpenWildcardNucleiResultsModal}>Results</Button>
                         </div>
                       </Card.Body>
                     </Card>
@@ -6561,84 +8175,70 @@ function App() {
             {activeTarget.type === 'URL' && (
               <div className="mb-4">
                 <h3 className="text-danger mb-3">URL</h3>
-                <h4 className="text-secondary mb-3 fs-5">Threat Modeling</h4>
-                <HelpMeLearn section="threatModeling" />
+                <h4 className="text-secondary mb-3 fs-5">Manual Crawling</h4>
                 <Row className="mb-4">
                   <Col md={12}>
                     <Card className="shadow-sm h-100 text-center" style={{ minHeight: '200px' }}>
                       <Card.Body className="d-flex flex-column">
                         <Card.Title className="text-danger mb-3">
-                          STRIDE Threat Model
+                          Manual Crawling
                         </Card.Title>
                         <Card.Text className="text-white small fst-italic">
-                          Perform comprehensive threat modeling using the STRIDE methodology to identify security threats across six categories:
-                          <div style={{ columnCount: 2, columnGap: '20px', marginTop: '15px', marginBottom: '15px', textAlign: 'center' }}>
-                            <div style={{ marginBottom: '8px' }}>
-                              <strong>(S)poofing</strong> - Impersonation of users, systems, or data
-                            </div>
-                            <div style={{ marginBottom: '8px' }}>
-                              <strong>(T)ampering</strong> - Malicious modification of data or code
-                            </div>
-                            <div style={{ marginBottom: '8px' }}>
-                              <strong>(R)epudiation</strong> - Denial of actions without proper logging
-                            </div>
-                            <div style={{ marginBottom: '8px' }}>
-                              <strong>(I)nformation Disclosure</strong> - Exposure of sensitive information
-                            </div>
-                            <div style={{ marginBottom: '8px' }}>
-                              <strong>(D)enial of Service</strong> - Preventing legitimate access
-                            </div>
-                            <div style={{ marginBottom: '8px' }}>
-                              <strong>(E)levation of Privilege</strong> - Gaining unauthorized elevated permissions
-                            </div>
-                          </div>
-                          Build your threat model by documenting reconnaissance findings, identifying mechanisms and objects, assessing security controls, and systematically analyzing potential attack vectors and their business impact.
+                          Manually browse the application to discover authenticated areas, dynamic content, and endpoints that automated tools miss. Navigate as a real user to capture hidden functionality and attack surfaces.
                         </Card.Text>
+                        <div className="my-3 py-3">
+                          <Row className="text-center align-items-center">
+                            <Col>
+                              <div className="text-danger fw-bold fs-4">{manualCrawlEndpointCount}</div>
+                              <div className="text-muted small">Endpoints Discovered</div>
+                            </Col>
+                            <Col>
+                              {manualCrawlConnected ? (
+                                <div className="text-success">
+                                  <i className="bi bi-record-circle-fill me-2" style={{ fontSize: '0.8rem' }}></i>
+                                  <strong>Actively Recording Session</strong>
+                                </div>
+                              ) : (
+                                <div className="text-muted">
+                                  <i className="bi bi-circle-fill me-2" style={{ fontSize: '0.6rem' }}></i>
+                                  No Active Recording
+                                </div>
+                              )}
+                            </Col>
+                            <Col>
+                              <div className="text-danger fw-bold fs-4">{manualCrawlSessionCount}</div>
+                              <div className="text-muted small">Crawl Sessions</div>
+                            </Col>
+                          </Row>
+                        </div>
                         <div className="mt-auto">
                           <Row className="g-2">
                             <Col>
                               <Button
                                 variant="outline-danger"
                                 className="w-100"
-                                onClick={handleOpenApplicationQuestionsModal}
+                                onClick={handleOpenExtensionInstallModal}
                               >
-                                High-Level Questions
+                                Install Extension
                               </Button>
                             </Col>
                             <Col>
                               <Button
                                 variant="outline-danger"
                                 className="w-100"
-                                onClick={handleOpenMechanismsModal}
+                                onClick={handleOpenTargetUrl}
+                                disabled={!activeTarget || !activeTarget.scope_target}
                               >
-                                Mechanisms
+                                Crawl Target URL
                               </Button>
                             </Col>
                             <Col>
                               <Button
                                 variant="outline-danger"
                                 className="w-100"
-                                onClick={handleOpenNotableObjectsModal}
+                                onClick={handleOpenManualCrawlResultsModal}
                               >
-                                Notable Objects
-                              </Button>
-                            </Col>
-                            <Col>
-                              <Button
-                                variant="outline-danger"
-                                className="w-100"
-                                onClick={handleOpenSecurityControlsModal}
-                              >
-                                Security Controls
-                              </Button>
-                            </Col>
-                            <Col>
-                              <Button
-                                variant="outline-danger"
-                                className="w-100"
-                                onClick={handleOpenThreatModelModal}
-                              >
-                                Threat Model
+                                View Results
                               </Button>
                             </Col>
                           </Row>
@@ -6648,10 +8248,6 @@ function App() {
                   </Col>
                 </Row>
                 <h4 className="text-secondary mb-3 fs-5 mt-4">URL Discovery & Endpoint Enumeration</h4>
-                <div className="alert alert-warning mb-3" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                  This section is still under development
-                </div>
                 <Row className="mb-4">
                   {[
                     {
@@ -6664,7 +8260,10 @@ function App() {
                       onScan: startKatanaURLScan,
                       onResults: handleOpenKatanaURLResultsModal,
                       resultCount: mostRecentKatanaURLScan && mostRecentKatanaURLScan.result ? 
-                        mostRecentKatanaURLScan.result.split('\n').filter(line => line.trim()).length : 0,
+                        (() => {
+                          const match = mostRecentKatanaURLScan.result.match(/Found (\d+) direct endpoints and (\d+) adjacent endpoints/);
+                          return match ? parseInt(match[1]) + parseInt(match[2]) : 0;
+                        })() : 0,
                       resultLabel: 'Endpoints'
                     },
                     {
@@ -6677,7 +8276,10 @@ function App() {
                       onScan: startLinkFinderURLScan,
                       onResults: handleOpenLinkFinderURLResultsModal,
                       resultCount: mostRecentLinkFinderURLScan && mostRecentLinkFinderURLScan.result ? 
-                        mostRecentLinkFinderURLScan.result.split('\n').filter(line => line.trim()).length : 0,
+                        (() => {
+                          const match = mostRecentLinkFinderURLScan.result.match(/Found (\d+) direct endpoints and (\d+) adjacent endpoints/);
+                          return match ? parseInt(match[1]) + parseInt(match[2]) : 0;
+                        })() : 0,
                       resultLabel: 'Endpoints'
                     },
                     {
@@ -6690,7 +8292,10 @@ function App() {
                       onScan: startWaybackURLsScan,
                       onResults: handleOpenWaybackURLsResultsModal,
                       resultCount: mostRecentWaybackURLsScan && mostRecentWaybackURLsScan.result ? 
-                        mostRecentWaybackURLsScan.result.split('\n').filter(line => line.trim()).length : 0,
+                        (() => {
+                          const match = mostRecentWaybackURLsScan.result.match(/Found (\d+) direct endpoints and (\d+) adjacent endpoints/);
+                          return match ? parseInt(match[1]) + parseInt(match[2]) : 0;
+                        })() : 0,
                       resultLabel: 'Endpoints'
                     },
                     {
@@ -6704,19 +8309,29 @@ function App() {
                       onResults: handleOpenGAUURLResultsModal,
                       resultCount: mostRecentGAUURLScan && mostRecentGAUURLScan.result ? 
                         (() => {
-                          try {
-                            const results = mostRecentGAUURLScan.result.split('\n')
-                              .filter(line => line.trim())
-                              .map(line => JSON.parse(line));
-                            return results.length;
-                          } catch (e) {
-                            return mostRecentGAUURLScan.result.split('\n').filter(line => line.trim()).length;
-                          }
+                          const match = mostRecentGAUURLScan.result.match(/Found (\d+) direct endpoints and (\d+) adjacent endpoints/);
+                          return match ? parseInt(match[1]) + parseInt(match[2]) : 0;
+                        })() : 0,
+                      resultLabel: 'Endpoints'
+                    },
+                    {
+                      name: 'GoSpider',
+                      link: 'https://github.com/jaeles-project/gospider',
+                      description: 'Fast Go-based web crawler for large-scale link enumeration with concurrent crawling and third-party source integration.',
+                      isActive: true,
+                      status: mostRecentGoSpiderURLScanStatus,
+                      isScanning: isGoSpiderURLScanning,
+                      onScan: startGoSpiderURLScan,
+                      onResults: handleOpenGoSpiderURLResultsModal,
+                      resultCount: mostRecentGoSpiderURLScan && mostRecentGoSpiderURLScan.result ? 
+                        (() => {
+                          const match = mostRecentGoSpiderURLScan.result.match(/Found (\d+) direct endpoints and (\d+) adjacent endpoints/);
+                          return match ? parseInt(match[1]) + parseInt(match[2]) : 0;
                         })() : 0,
                       resultLabel: 'Endpoints'
                     }
                   ].map((tool, index) => (
-                    <Col md={3} key={index}>
+                    <Col key={index}>
                       <Card className="shadow-sm h-100 text-center" style={{ minHeight: '250px' }}>
                         <Card.Body className="d-flex flex-column">
                           <Card.Title className="text-danger mb-3">
@@ -6763,10 +8378,6 @@ function App() {
                 </Row>
 
                 <h4 className="text-secondary mb-3 fs-5 mt-4">Endpoint Brute Forcing</h4>
-                <div className="alert alert-warning mb-3" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                  This section is still under development
-                </div>
                 <Row className="mb-4">
                   <Col md={12}>
                     <Card className="shadow-sm h-100 text-center" style={{ minHeight: '250px' }}>
@@ -6829,6 +8440,247 @@ function App() {
                     </Card>
                   </Col>
                 </Row>
+
+                <h4 className="text-secondary mb-3 fs-5 mt-4">Target URL Endpoints</h4>
+                <Row className="mb-4">
+                  <Col md={12}>
+                    <Card className="shadow-sm h-100 text-center" style={{ minHeight: '250px' }}>
+                      <Card.Body className="d-flex flex-column">
+                        <Card.Title className="text-danger mb-3">
+                          Endpoint Consolidation
+                        </Card.Title>
+                        <Card.Text className="text-white small fst-italic">
+                          Consolidate all discovered endpoints from crawling, link discovery, and brute forcing into a unified collection of HTTP requests and responses. Prepare your attack surface for parameter enumeration and vulnerability testing.
+                        </Card.Text>
+                        <div className="mt-auto">
+                          <Card.Text className="text-white small mb-3">
+                            Consolidated Endpoints: {consolidatedEndpointCount}
+                          </Card.Text>
+                          <div className="d-flex gap-2">
+                            <Button 
+                              variant="outline-danger"
+                              className="flex-fill"
+                              onClick={handleConsolidateEndpoints}
+                              disabled={!activeTarget || isConsolidatingEndpoints}
+                            >
+                              {isConsolidatingEndpoints ? (
+                                <><Spinner animation="border" size="sm" className="me-2" />Consolidating...</>
+                              ) : (
+                                'Consolidate'
+                              )}
+                            </Button>
+                            <Button 
+                              variant="outline-danger"
+                              className="flex-fill"
+                              onClick={handleInvestigateEndpoints}
+                              disabled={!activeTarget || isInvestigatingEndpoints || consolidatedEndpointCount === 0}
+                            >
+                              {isInvestigatingEndpoints ? (
+                                <><Spinner animation="border" size="sm" className="me-2" />Investigating...</>
+                              ) : (
+                                'Investigate'
+                              )}
+                            </Button>
+                            <Button 
+                              variant="outline-danger"
+                              className="flex-fill"
+                              onClick={handleOpenManageEndpointsModal}
+                              disabled={!activeTarget}
+                            >
+                              Manage Endpoints
+                            </Button>
+                          </div>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+
+                <h4 className="text-secondary mb-3 fs-5 mt-4">Parameter Enumeration</h4>
+                <Alert variant="warning" className="mb-3">
+                  This section is still under development.
+                </Alert>
+                <Row className="mb-4">
+                  {[
+                    {
+                      name: 'Arjun',
+                      link: 'https://github.com/s0md3v/Arjun',
+                      description: 'Python suite that brute-forces common HTTP parameters on a given URL. Uses a ~25,890-word default dictionary and can try GET/POST/JSON/XML parameters. Very fast (∼10 seconds, ~50–60 requests per target) thanks to optimized diffing.',
+                      isActive: activeTarget,
+                      isScanning: isArjunScanning,
+                      status: mostRecentArjunScanStatus,
+                      resultCount: mostRecentArjunScan?.parameters_found || 0,
+                      onScan: startArjunScan,
+                      onResults: handleOpenArjunResultsModal,
+                      onConfig: handleOpenArjunConfigModal,
+                      resultLabel: 'Parameters'
+                    },
+                    {
+                      name: 'parameth',
+                      link: 'https://github.com/maK-/parameth',
+                      description: 'Python script for brute-forcing GET/POST parameters by monitoring response changes. Sends requests with candidate param names and flags those that alter response size/content. Configurable (threading, ignore codes/sizes, variance offset).',
+                      isActive: activeTarget,
+                      isScanning: isParamethScanning,
+                      status: mostRecentParamethScanStatus,
+                      resultCount: mostRecentParamethScan?.parameters_found || 0,
+                      onScan: startParamethScan,
+                      onResults: handleOpenParamethResultsModal,
+                      onConfig: handleOpenParamethConfigModal,
+                      resultLabel: 'Parameters'
+                    },
+                    {
+                      name: 'x8',
+                      link: 'https://github.com/Sh1Yo/x8',
+                      description: 'Rust-based hidden parameter fuzzing suite. Injects parameters (via query, body or headers) and uses line-by-line page comparisons and response checks to verify valid parameters. Very high accuracy (detects non-random values like admin=true), highly configurable templates, and extremely fast.',
+                      isActive: activeTarget,
+                      isScanning: isX8Scanning,
+                      status: mostRecentX8ScanStatus,
+                      resultCount: mostRecentX8Scan?.parameters_found || 0,
+                      onScan: startX8Scan,
+                      onResults: handleOpenX8ResultsModal,
+                      onConfig: handleOpenX8ConfigModal,
+                      resultLabel: 'Parameters'
+                    }
+                  ].map((tool, index) => (
+                    <Col key={index}>
+                      <Card className="shadow-sm h-100 text-center" style={{ minHeight: '250px' }}>
+                        <Card.Body className="d-flex flex-column">
+                          <Card.Title className="text-danger mb-3">
+                            <a href={tool.link} className="text-danger text-decoration-none" target="_blank" rel="noopener noreferrer">
+                              {tool.name}
+                            </a>
+                          </Card.Title>
+                          <Card.Text className="text-white small fst-italic">
+                            {tool.description}
+                          </Card.Text>
+                          <div className="mt-auto">
+                            <Card.Text className="text-white small mb-3">
+                              {tool.resultLabel}: {tool.resultCount || "0"}
+                            </Card.Text>
+                            <div className="d-flex justify-content-center gap-2">
+                              <Button
+                                variant="outline-danger"
+                                className="flex-fill"
+                                onClick={tool.onScan}
+                                disabled
+                              >
+                                <div className="btn-content">
+                                  {tool.isScanning ? (
+                                    <Spinner animation="border" size="sm" />
+                                  ) : (
+                                    'Scan'
+                                  )}
+                                </div>
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                className="flex-fill"
+                                onClick={tool.onConfig}
+                                disabled
+                              >
+                                Config
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                className="flex-fill"
+                                onClick={tool.onResults}
+                                disabled
+                              >
+                                Results
+                              </Button>
+                            </div>
+                          </div>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+
+                <h4 className="text-secondary mb-3 fs-5 mt-4">Threat Modeling</h4>
+                <HelpMeLearn section="threatModeling" />
+                <Row className="mb-4">
+                  <Col md={12}>
+                    <Card className="shadow-sm h-100 text-center" style={{ minHeight: '200px' }}>
+                      <Card.Body className="d-flex flex-column">
+                        <Card.Title className="text-danger mb-3">
+                          STRIDE Threat Model
+                        </Card.Title>
+                        <Card.Text className="text-white small fst-italic">
+                          Perform comprehensive threat modeling using the STRIDE methodology to identify security threats across six categories:
+                          <div style={{ columnCount: 2, columnGap: '20px', marginTop: '15px', marginBottom: '15px', textAlign: 'center' }}>
+                            <div style={{ marginBottom: '8px' }}>
+                              <strong>(S)poofing</strong> - Impersonation of users, systems, or data
+                            </div>
+                            <div style={{ marginBottom: '8px' }}>
+                              <strong>(T)ampering</strong> - Malicious modification of data or code
+                            </div>
+                            <div style={{ marginBottom: '8px' }}>
+                              <strong>(R)epudiation</strong> - Denial of actions without proper logging
+                            </div>
+                            <div style={{ marginBottom: '8px' }}>
+                              <strong>(I)nformation Disclosure</strong> - Exposure of sensitive information
+                            </div>
+                            <div style={{ marginBottom: '8px' }}>
+                              <strong>(D)enial of Service</strong> - Preventing legitimate access
+                            </div>
+                            <div style={{ marginBottom: '8px' }}>
+                              <strong>(E)levation of Privilege</strong> - Gaining unauthorized elevated permissions
+                            </div>
+                          </div>
+                        </Card.Text>
+                        <div className="mt-auto">
+                          <Row className="g-2">
+                            <Col>
+                              <Button
+                                variant="outline-danger"
+                                className="w-100"
+                                onClick={handleOpenApplicationQuestionsModal}
+                              >
+                                High-Level Questions
+                              </Button>
+                            </Col>
+                            <Col>
+                              <Button
+                                variant="outline-danger"
+                                className="w-100"
+                                onClick={handleOpenMechanismsModal}
+                              >
+                                Mechanisms
+                              </Button>
+                            </Col>
+                            <Col>
+                              <Button
+                                variant="outline-danger"
+                                className="w-100"
+                                onClick={handleOpenNotableObjectsModal}
+                              >
+                                Notable Objects
+                              </Button>
+                            </Col>
+                            <Col>
+                              <Button
+                                variant="outline-danger"
+                                className="w-100"
+                                onClick={handleOpenSecurityControlsModal}
+                              >
+                                Security Controls
+                              </Button>
+                            </Col>
+                            <Col>
+                              <Button
+                                variant="outline-danger"
+                                className="w-100"
+                                onClick={handleOpenThreatModelModal}
+                              >
+                                Threat Model
+                              </Button>
+                            </Col>
+                          </Row>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
               </div>
             )}
           </div>
@@ -6842,6 +8694,16 @@ function App() {
           targetURLs={targetURLs}
           setTargetURLs={setTargetURLs}
           fetchScopeTargets={fetchScopeTargets}
+          onPopulateBurp={handleOpenToolsModalWithUrls}
+        />
+      </Suspense>
+      <Suspense fallback={<div />}>
+        <ConfigureMetaDataModal
+          show={showConfigureMetaDataModal}
+          handleClose={handleCloseConfigureMetaDataModal}
+          targetURLs={targetURLs}
+          onSaveConfig={handleSaveMetaDataConfig}
+          currentConfig={activeTarget ? metaDataScanConfigs[activeTarget.id] : null}
         />
       </Suspense>
       <Suspense fallback={<div />}>
@@ -6872,7 +8734,7 @@ function App() {
                 <th className="text-center bg-dark border-danger">R2</th>
                 <th colSpan={2} className="text-center bg-dark border-danger">JS/Link Discovery</th>
                 <th className="text-center bg-dark border-danger">R3</th>
-                <th colSpan={2} className="text-center bg-dark border-danger">Analysis</th>
+                <th className="text-center bg-dark border-danger">Metadata</th>
               </tr>
               <tr>
                 <th colSpan={5}></th>
@@ -6889,14 +8751,13 @@ function App() {
                 <th className="text-center" style={{width: '40px'}}>GS</th>
                 <th className="text-center" style={{width: '40px'}}>SDZ</th>
                 <th className="text-center" style={{width: '40px'}}>HX3</th>
-                <th className="text-center" style={{width: '40px'}}>NSC</th>
                 <th className="text-center" style={{width: '40px'}}>MD</th>
               </tr>
             </thead>
             <tbody>
               {(!autoScanSessions || autoScanSessions.length === 0) ? (
                 <tr>
-                  <td colSpan={20} className="text-center text-white-50">
+                  <td colSpan={19} className="text-center text-white-50">
                     No auto scan sessions found for this target.
                   </td>
                 </tr>
@@ -6904,29 +8765,28 @@ function App() {
                 autoScanSessions.map((session) => (
                   <tr key={session.session_id}>
                     <td>{session.start_time}</td>
-                    <td>{session.duration || '—'}</td>
+                    <td>{session.duration || '-'}</td>
                     <td>
                       <span className={`text-${session.status === 'completed' ? 'success' : session.status === 'cancelled' ? 'warning' : 'primary'}`}>
                         {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                       </span>
                     </td>
-                    <td className="text-center"><strong>{session.final_consolidated_subdomains || '—'}</strong></td>
-                    <td className="text-center"><strong>{session.final_live_web_servers || '—'}</strong></td>
-                    <td className="text-center">{session.config?.amass ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.sublist3r ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.assetfinder ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.gau ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.ctl ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.subfinder ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.httpx_round1 ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.shuffledns ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.cewl ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.httpx_round2 ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.gospider ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.subdomainizer ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.httpx_round3 ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.nuclei_screenshot ? <span className="text-danger fw-bold">✓</span> : ''}</td>
-                    <td className="text-center">{session.config?.metadata ? <span className="text-danger fw-bold">✓</span> : ''}</td>
+                    <td className="text-center"><strong>{session.final_consolidated_subdomains || '0'}</strong></td>
+                    <td className="text-center"><strong>{session.final_live_web_servers || '0'}</strong></td>
+                    <td className="text-center">{session.config?.amass ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.sublist3r ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.assetfinder ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.gau ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.ctl ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.subfinder ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.httpx_round1 ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.shuffledns ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.cewl ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.httpx_round2 ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.gospider ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.subdomainizer ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{session.config?.httpx_round3 ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
+                    <td className="text-center">{(session.config?.metadata || session.config?.nuclei_screenshot) ? <span className="text-success fw-bold">✓</span> : <span className="text-secondary">-</span>}</td>
                   </tr>
                 ))
               )}
@@ -7186,6 +9046,7 @@ function App() {
         activeTarget={activeTarget}
         consolidatedNetworkRanges={consolidatedNetworkRanges}
         mostRecentIPPortScan={mostRecentIPPortScan}
+        onPopulateBurp={handleOpenToolsModalWithUrls}
       />
       <AmassEnumConfigModal
         show={showAmassEnumConfigModal}
@@ -7222,6 +9083,15 @@ function App() {
         handleClose={handleCloseNucleiConfigModal}
         activeTarget={activeTarget}
         onSaveConfig={handleNucleiConfigSave}
+        mode="company"
+      />
+
+      <NucleiConfigModal
+        show={showWildcardNucleiConfigModal}
+        handleClose={handleCloseWildcardNucleiConfigModal}
+        activeTarget={activeTarget}
+        onSaveConfig={handleWildcardNucleiConfigSave}
+        mode="wildcard"
       />
 
       <KatanaCompanyConfigModal
@@ -7273,6 +9143,52 @@ function App() {
         mostRecentGAUURLScan={mostRecentGAUURLScan}
       />
 
+      <GoSpiderURLResultsModal
+        show={showGoSpiderURLResultsModal}
+        handleClose={handleCloseGoSpiderURLResultsModal}
+        activeTarget={activeTarget}
+        mostRecentGoSpiderURLScan={mostRecentGoSpiderURLScan}
+      />
+
+      <ArjunConfigModal
+        show={showArjunConfigModal}
+        handleClose={handleCloseArjunConfigModal}
+        activeTarget={activeTarget}
+      />
+
+      <ArjunResultsModal
+        show={showArjunResultsModal}
+        handleClose={handleCloseArjunResultsModal}
+        activeTarget={activeTarget}
+        mostRecentArjunScan={mostRecentArjunScan}
+      />
+
+      <ParamethConfigModal
+        show={showParamethConfigModal}
+        handleClose={handleCloseParamethConfigModal}
+        activeTarget={activeTarget}
+      />
+
+      <ParamethResultsModal
+        show={showParamethResultsModal}
+        handleClose={handleCloseParamethResultsModal}
+        activeTarget={activeTarget}
+        mostRecentParamethScan={mostRecentParamethScan}
+      />
+
+      <X8ConfigModal
+        show={showX8ConfigModal}
+        handleClose={handleCloseX8ConfigModal}
+        activeTarget={activeTarget}
+      />
+
+      <X8ResultsModal
+        show={showX8ResultsModal}
+        handleClose={handleCloseX8ResultsModal}
+        activeTarget={activeTarget}
+        mostRecentX8Scan={mostRecentX8Scan}
+      />
+
       <FFUFURLResultsModal
         show={showFFUFURLResultsModal}
         handleClose={handleCloseFFUFURLResultsModal}
@@ -7313,6 +9229,23 @@ function App() {
         securityControls={securityControlsForThreatModel}
       />
 
+      <ManualCrawlResultsModal
+        show={showManualCrawlResultsModal}
+        onHide={handleCloseManualCrawlResultsModal}
+        scopeTargetId={activeTarget?.id}
+      />
+
+      <ExtensionInstallModal
+        show={showExtensionInstallModal}
+        onHide={handleCloseExtensionInstallModal}
+      />
+
+      <ManageEndpointsModal
+        show={showManageEndpointsModal}
+        onHide={handleCloseManageEndpointsModal}
+        scopeTargetId={activeTarget?.id}
+      />
+
       <FFUFConfigModal
         show={showFFUFConfigModal}
         handleClose={handleCloseFFUFConfigModal}
@@ -7323,6 +9256,13 @@ function App() {
         show={showExploreAttackSurfaceModal}
         handleClose={handleCloseExploreAttackSurfaceModal}
         activeTarget={activeTarget}
+      />
+
+      <ManageAttackSurfaceModal
+        show={showManageAttackSurfaceModal}
+        handleClose={handleCloseManageAttackSurfaceModal}
+        activeTarget={activeTarget}
+        onAssetChange={handleAttackSurfaceAssetChange}
       />
 
       <AttackSurfaceVisualizationModal
@@ -7345,6 +9285,22 @@ function App() {
         show={showNucleiHistoryModal}
         handleClose={handleCloseNucleiHistoryModal}
         scans={nucleiScans}
+      />
+
+      <NucleiResultsModal
+        show={showWildcardNucleiResultsModal}
+        handleClose={handleCloseWildcardNucleiResultsModal}
+        scan={activeWildcardNucleiScan}
+        scans={wildcardNucleiScans}
+        activeNucleiScan={activeWildcardNucleiScan}
+        setActiveNucleiScan={setActiveWildcardNucleiScan}
+        setShowToast={setShowToast}
+      />
+
+      <NucleiHistoryModal
+        show={showWildcardNucleiHistoryModal}
+        handleClose={handleCloseWildcardNucleiHistoryModal}
+        scans={wildcardNucleiScans}
       />
     </Container>
   );

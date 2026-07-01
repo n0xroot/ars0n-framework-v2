@@ -5,7 +5,8 @@ const initiateHttpxScan = async (
   setHttpxScans,
   setMostRecentHttpxScanStatus,
   setMostRecentHttpxScan,
-  autoScanSessionId
+  autoScanSessionId,
+  httpxConfig
 ) => {
   if (!activeTarget) return;
 
@@ -17,8 +18,9 @@ const initiateHttpxScan = async (
   try {
     const body = { fqdn };
     if (autoScanSessionId) body.auto_scan_session_id = autoScanSessionId;
+    if (httpxConfig) body.config = httpxConfig;
     const response = await fetch(
-      `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/httpx/run`,
+      `/api/httpx/run`,
       {
         method: 'POST',
         headers: {

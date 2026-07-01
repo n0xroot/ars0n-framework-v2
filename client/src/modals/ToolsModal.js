@@ -18,7 +18,7 @@ const styles = {
   },
 };
 
-function ToolsModal({ show, handleClose, initialTab = 'url-populator' }) {
+function ToolsModal({ show, handleClose, initialTab = 'url-populator', initialUrls = '' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,12 +60,19 @@ function ToolsModal({ show, handleClose, initialTab = 'url-populator' }) {
     setActiveTab(initialTab);
   }, [initialTab]);
 
+  useEffect(() => {
+    if (show && initialUrls) {
+      setRawInput(initialUrls);
+      setActiveTab('url-populator');
+    }
+  }, [show, initialUrls]);
+
   const fetchSettings = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/user/settings`
+        `/api/user/settings`
       );
       
       if (!response.ok) {
@@ -102,7 +109,7 @@ function ToolsModal({ show, handleClose, initialTab = 'url-populator' }) {
       };
 
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/user/settings`,
+        `/api/user/settings`,
         {
           method: 'POST',
           headers: {
@@ -210,7 +217,7 @@ function ToolsModal({ show, handleClose, initialTab = 'url-populator' }) {
         
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/burpsuite/populate`,
+            `/api/burpsuite/populate`,
             {
               method: 'POST',
               headers: {
@@ -481,7 +488,7 @@ function ToolsModal({ show, handleClose, initialTab = 'url-populator' }) {
           };
 
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api-populator/process`,
+            `/api/api-populator/process`,
             {
               method: 'POST',
               headers: {

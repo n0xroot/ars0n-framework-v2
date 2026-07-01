@@ -129,6 +129,8 @@ func main() {
 	r.HandleFunc("/investigate-fqdns/{scope_target_id}", utils.InvestigateFQDNs).Methods("POST", "OPTIONS")
 	r.HandleFunc("/attack-surface-asset-counts/{scope_target_id}", utils.GetAttackSurfaceAssetCounts).Methods("GET", "OPTIONS")
 	r.HandleFunc("/attack-surface-assets/{scope_target_id}", utils.GetAttackSurfaceAssets).Methods("GET", "OPTIONS")
+	r.HandleFunc("/attack-surface-assets/add", utils.AddAttackSurfaceAsset).Methods("POST", "OPTIONS")
+	r.HandleFunc("/attack-surface-assets/{asset_id}", utils.DeleteAttackSurfaceAsset).Methods("DELETE", "OPTIONS")
 	r.HandleFunc("/shuffledns/run", utils.RunShuffleDNSScan).Methods("POST", "OPTIONS")
 	r.HandleFunc("/shuffledns/{scan_id}", utils.GetShuffleDNSScanStatus).Methods("GET", "OPTIONS")
 	r.HandleFunc("/scopetarget/{id}/scans/shuffledns", utils.GetShuffleDNSScansForScopeTarget).Methods("GET", "OPTIONS")
@@ -152,6 +154,7 @@ func main() {
 	r.HandleFunc("/api/scope-targets/{id}/target-urls", utils.GetTargetURLsForScopeTarget).Methods("GET", "OPTIONS")
 	r.HandleFunc("/metadata/run", utils.RunMetaDataScan).Methods("POST", "OPTIONS")
 	r.HandleFunc("/metadata/{scan_id}", utils.GetMetaDataScanStatus).Methods("GET", "OPTIONS")
+	r.HandleFunc("/metadata/{scan_id}/cancel", utils.CancelMetaDataScan).Methods("POST", "OPTIONS")
 	r.HandleFunc("/scopetarget/{id}/scans/metadata", utils.GetMetaDataScansForScopeTarget).Methods("GET", "OPTIONS")
 	r.HandleFunc("/metadata/run-company", utils.RunCompanyMetaDataScan).Methods("POST", "OPTIONS")
 	r.HandleFunc("/ip-port-scan/{scan_id}/metadata-scans", utils.GetCompanyMetaDataScansForIPPortScan).Methods("GET", "OPTIONS")
@@ -191,6 +194,10 @@ func main() {
 	r.HandleFunc("/api/hackerone/test-key", utils.TestHackerOneAPIKey).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/hackerone/program", utils.GetHackerOneProgram).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/hackerone/programs", utils.ListHackerOnePrograms).Methods("GET", "OPTIONS")
+
+	// MCP Server config routes
+	r.HandleFunc("/api/mcp-config", getMcpConfig).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/mcp-config", updateMcpConfig).Methods("POST", "OPTIONS")
 
 	// AI API Keys routes
 	r.HandleFunc("/api/ai-api-keys", getAiAPIKeys).Methods("GET", "OPTIONS")
@@ -258,11 +265,15 @@ func main() {
 	// Katana Company configuration routes
 	r.HandleFunc("/katana-company-config/{scope_target_id}", getKatanaCompanyConfig).Methods("GET", "OPTIONS")
 	r.HandleFunc("/katana-company-config/{scope_target_id}", saveKatanaCompanyConfig).Methods("POST", "OPTIONS")
+	r.HandleFunc("/httpx-config/{scope_target_id}", getHttpxConfig).Methods("GET", "OPTIONS")
+	r.HandleFunc("/httpx-config/{scope_target_id}", saveHttpxConfig).Methods("POST", "OPTIONS")
 	r.HandleFunc("/nuclei-config/{scope_target_id}", getNucleiConfig).Methods("GET", "OPTIONS")
 	r.HandleFunc("/nuclei-config/{scope_target_id}", saveNucleiConfig).Methods("POST", "OPTIONS")
 	r.HandleFunc("/scopetarget/{id}/scans/nuclei", getNucleiScansForScopeTarget).Methods("GET", "OPTIONS")
 	r.HandleFunc("/scopetarget/{id}/scans/nuclei/start", startNucleiScan).Methods("POST", "OPTIONS")
 	r.HandleFunc("/nuclei-scan/{scan_id}/status", getNucleiScanStatus).Methods("GET", "OPTIONS")
+	r.HandleFunc("/nuclei-templates", listNucleiTemplates).Methods("GET", "OPTIONS")
+	r.HandleFunc("/scopetarget/{id}/wildcard-nuclei-targets", getWildcardNucleiTargets).Methods("GET", "OPTIONS")
 
 	// Katana Company scan routes
 	r.HandleFunc("/katana-company/run/{scope_target_id}", utils.RunKatanaCompanyScan).Methods("POST", "OPTIONS")
@@ -298,6 +309,12 @@ func main() {
 	r.HandleFunc("/gau-url/status/{scan_id}", utils.GetGAUURLScanStatus).Methods("GET", "OPTIONS")
 	r.HandleFunc("/scopetarget/{id}/scans/gau-url", utils.GetGAUURLScansForScopeTarget).Methods("GET", "OPTIONS")
 	
+	r.HandleFunc("/gospider-url/run", utils.RunGoSpiderURLScan).Methods("POST", "OPTIONS")
+	r.HandleFunc("/gospider-url/status/{scan_id}", utils.GetGoSpiderURLScanStatus).Methods("GET", "OPTIONS")
+	r.HandleFunc("/scopetarget/{id}/scans/gospider-url", utils.GetGoSpiderURLScansForScopeTarget).Methods("GET", "OPTIONS")
+	
+	r.HandleFunc("/discovered-endpoints/{scan_id}", utils.GetDiscoveredEndpoints).Methods("GET", "OPTIONS")
+	
 	r.HandleFunc("/ffuf-url/run", utils.RunFFUFURLScan).Methods("POST", "OPTIONS")
 	r.HandleFunc("/ffuf-url/status/{scan_id}", utils.GetFFUFURLScanStatus).Methods("GET", "OPTIONS")
 	r.HandleFunc("/scopetarget/{id}/scans/ffuf-url", utils.GetFFUFURLScansForScopeTarget).Methods("GET", "OPTIONS")
@@ -307,6 +324,27 @@ func main() {
 	r.HandleFunc("/ffuf-wordlists/upload", utils.UploadFFUFWordlist).Methods("POST", "OPTIONS")
 	r.HandleFunc("/ffuf-wordlists", utils.GetFFUFWordlists).Methods("GET", "OPTIONS")
 	r.HandleFunc("/ffuf-wordlists/{wordlist_id}", utils.DeleteFFUFWordlist).Methods("DELETE", "OPTIONS")
+
+	r.HandleFunc("/arjun/run", utils.RunArjunScan).Methods("POST", "OPTIONS")
+	r.HandleFunc("/arjun/status/{scan_id}", utils.GetArjunScanStatus).Methods("GET", "OPTIONS")
+	r.HandleFunc("/scopetarget/{id}/scans/arjun", utils.GetArjunScansForScopeTarget).Methods("GET", "OPTIONS")
+	r.HandleFunc("/arjun/results/{scan_id}", utils.GetArjunScanResults).Methods("GET", "OPTIONS")
+	r.HandleFunc("/arjun-config/{scope_target_id}", utils.SaveArjunConfig).Methods("POST", "OPTIONS")
+	r.HandleFunc("/arjun-config/{scope_target_id}", utils.GetArjunConfig).Methods("GET", "OPTIONS")
+
+	r.HandleFunc("/parameth/run", utils.RunParamethScan).Methods("POST", "OPTIONS")
+	r.HandleFunc("/parameth/status/{scan_id}", utils.GetParamethScanStatus).Methods("GET", "OPTIONS")
+	r.HandleFunc("/scopetarget/{id}/scans/parameth", utils.GetParamethScansForScopeTarget).Methods("GET", "OPTIONS")
+	r.HandleFunc("/parameth/results/{scan_id}", utils.GetParamethScanResults).Methods("GET", "OPTIONS")
+	r.HandleFunc("/parameth-config/{scope_target_id}", utils.SaveParamethConfig).Methods("POST", "OPTIONS")
+	r.HandleFunc("/parameth-config/{scope_target_id}", utils.GetParamethConfig).Methods("GET", "OPTIONS")
+
+	r.HandleFunc("/x8/run", utils.RunX8Scan).Methods("POST", "OPTIONS")
+	r.HandleFunc("/x8/status/{scan_id}", utils.GetX8ScanStatus).Methods("GET", "OPTIONS")
+	r.HandleFunc("/scopetarget/{id}/scans/x8", utils.GetX8ScansForScopeTarget).Methods("GET", "OPTIONS")
+	r.HandleFunc("/x8/results/{scan_id}", utils.GetX8ScanResults).Methods("GET", "OPTIONS")
+	r.HandleFunc("/x8-config/{scope_target_id}", utils.SaveX8Config).Methods("POST", "OPTIONS")
+	r.HandleFunc("/x8-config/{scope_target_id}", utils.GetX8Config).Methods("GET", "OPTIONS")
 
 	r.HandleFunc("/application-questions/{scope_target_id}/answers", utils.GetApplicationQuestionsAnswers).Methods("GET", "OPTIONS")
 	r.HandleFunc("/application-questions/{scope_target_id}/answers", utils.CreateApplicationQuestionAnswer).Methods("POST", "OPTIONS")
@@ -332,6 +370,22 @@ func main() {
 	r.HandleFunc("/threat-model/{scope_target_id}", utils.CreateThreatModel).Methods("POST", "OPTIONS")
 	r.HandleFunc("/threat-model/{threat_id}", utils.UpdateThreatModel).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/threat-model/{threat_id}", utils.DeleteThreatModel).Methods("DELETE", "OPTIONS")
+
+	r.HandleFunc("/health", utils.HealthCheck).Methods("GET", "OPTIONS")
+	r.HandleFunc("/manual-crawl/start", utils.StartManualCrawl).Methods("POST", "OPTIONS")
+	r.HandleFunc("/manual-crawl/capture", utils.CaptureManualCrawlRequest).Methods("POST", "OPTIONS")
+	r.HandleFunc("/manual-crawl/stop", utils.StopManualCrawl).Methods("POST", "OPTIONS")
+	r.HandleFunc("/manual-crawl/cleanup", utils.CleanupStaleSessions).Methods("POST", "OPTIONS")
+	r.HandleFunc("/manual-crawl/sessions/all", utils.GetAllManualCrawlSessions).Methods("GET", "OPTIONS")
+	r.HandleFunc("/manual-crawl/sessions/{scope_target_id}", utils.GetManualCrawlSessions).Methods("GET", "OPTIONS")
+	r.HandleFunc("/manual-crawl/captures/{session_id}", utils.GetManualCrawlCaptures).Methods("GET", "OPTIONS")
+	r.HandleFunc("/manual-crawl/endpoints/{scope_target_id}", utils.GetManualCrawlEndpoints).Methods("GET", "OPTIONS")
+
+	r.HandleFunc("/consolidated-endpoints/{scope_target_id}/consolidate", utils.ConsolidateURLEndpoints).Methods("POST", "OPTIONS")
+	r.HandleFunc("/consolidated-endpoints/{scope_target_id}", utils.GetConsolidatedURLEndpoints).Methods("GET", "OPTIONS")
+	r.HandleFunc("/endpoint-investigation/{scope_target_id}", utils.RunEndpointInvestigation).Methods("POST", "OPTIONS")
+	r.HandleFunc("/endpoint-investigation/{scope_target_id}/status/{scan_id}", utils.GetEndpointInvestigationStatus).Methods("GET", "OPTIONS")
+	r.HandleFunc("/endpoint-investigation/{scope_target_id}/results", utils.GetEndpointInvestigationResults).Methods("GET", "OPTIONS")
 
 	log.Println("API server started on :8443")
 	http.ListenAndServe(":8443", r)
@@ -551,6 +605,84 @@ func getStringSetting(settings map[string]interface{}, key string, defaultValue 
 		}
 	}
 	return defaultValue
+}
+
+// getMcpConfig retrieves the MCP server configuration
+func getMcpConfig(w http.ResponseWriter, r *http.Request) {
+	var config map[string]interface{} = make(map[string]interface{})
+
+	row := dbPool.QueryRow(context.Background(), `
+		SELECT enabled, port, max_results, result_truncation_length
+		FROM mcp_server_config
+		LIMIT 1
+	`)
+
+	var enabled bool
+	var port, maxResults, resultTruncationLength int
+
+	err := row.Scan(&enabled, &port, &maxResults, &resultTruncationLength)
+
+	if err != nil {
+		log.Printf("Error fetching MCP config: %v", err)
+		config = map[string]interface{}{
+			"enabled":                   true,
+			"port":                      3001,
+			"max_results":               50,
+			"result_truncation_length":  3000,
+		}
+	} else {
+		config = map[string]interface{}{
+			"enabled":                   enabled,
+			"port":                      port,
+			"max_results":               maxResults,
+			"result_truncation_length":  resultTruncationLength,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(config)
+}
+
+// updateMcpConfig updates the MCP server configuration
+func updateMcpConfig(w http.ResponseWriter, r *http.Request) {
+	var config map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&config)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("[MCP Config] POST: %+v", config)
+
+	enabled := true
+	if val, ok := config["enabled"]; ok {
+		if bVal, ok := val.(bool); ok {
+			enabled = bVal
+		}
+	}
+
+	_, err = dbPool.Exec(context.Background(), `
+		UPDATE mcp_server_config SET
+			enabled = $1,
+			port = $2,
+			max_results = $3,
+			result_truncation_length = $4,
+			updated_at = NOW()
+		WHERE id = (SELECT id FROM mcp_server_config LIMIT 1)
+	`,
+		enabled,
+		getIntSetting(config, "port", 3001),
+		getIntSetting(config, "max_results", 50),
+		getIntSetting(config, "result_truncation_length", 3000),
+	)
+
+	if err != nil {
+		log.Printf("Error updating MCP config: %v", err)
+		http.Error(w, "Failed to update MCP config", http.StatusInternalServerError)
+		return
+	}
+
+	getMcpConfig(w, r)
 }
 
 // getAutoScanState retrieves the current auto scan state for a target
@@ -775,7 +907,7 @@ func updateAutoScanState(w http.ResponseWriter, r *http.Request) {
 
 func getAutoScanConfig(w http.ResponseWriter, r *http.Request) {
 	row := dbPool.QueryRow(context.Background(), `
-		SELECT amass, sublist3r, assetfinder, gau, ctl, subfinder, consolidate_httpx_round1, shuffledns, cewl, consolidate_httpx_round2, gospider, subdomainizer, consolidate_httpx_round3, nuclei_screenshot, metadata, max_consolidated_subdomains, max_live_web_servers
+		SELECT amass, sublist3r, assetfinder, gau, ctl, subfinder, consolidate_httpx_round1, shuffledns, cewl, consolidate_httpx_round2, gospider, subdomainizer, consolidate_httpx_round3, nuclei_screenshot, metadata, COALESCE(nuclei, true), max_consolidated_subdomains, max_live_web_servers
 		FROM auto_scan_config
 		LIMIT 1
 	`)
@@ -795,6 +927,7 @@ func getAutoScanConfig(w http.ResponseWriter, r *http.Request) {
 		ConsolidateHttpxRound3    bool `json:"consolidate_httpx_round3"`
 		NucleiScreenshot          bool `json:"nuclei_screenshot"`
 		Metadata                  bool `json:"metadata"`
+		Nuclei                    bool `json:"nuclei"`
 		MaxConsolidatedSubdomains int  `json:"maxConsolidatedSubdomains"`
 		MaxLiveWebServers         int  `json:"maxLiveWebServers"`
 	}
@@ -814,11 +947,11 @@ func getAutoScanConfig(w http.ResponseWriter, r *http.Request) {
 		&config.ConsolidateHttpxRound3,
 		&config.NucleiScreenshot,
 		&config.Metadata,
+		&config.Nuclei,
 		&config.MaxConsolidatedSubdomains,
 		&config.MaxLiveWebServers,
 	)
 	if err != nil {
-		// Return defaults if not found
 		config = struct {
 			Amass                     bool `json:"amass"`
 			Sublist3r                 bool `json:"sublist3r"`
@@ -835,10 +968,11 @@ func getAutoScanConfig(w http.ResponseWriter, r *http.Request) {
 			ConsolidateHttpxRound3    bool `json:"consolidate_httpx_round3"`
 			NucleiScreenshot          bool `json:"nuclei_screenshot"`
 			Metadata                  bool `json:"metadata"`
+			Nuclei                    bool `json:"nuclei"`
 			MaxConsolidatedSubdomains int  `json:"maxConsolidatedSubdomains"`
 			MaxLiveWebServers         int  `json:"maxLiveWebServers"`
 		}{
-			Amass: true, Sublist3r: true, Assetfinder: true, Gau: true, Ctl: true, Subfinder: true, ConsolidateHttpxRound1: true, Shuffledns: true, Cewl: true, ConsolidateHttpxRound2: true, Gospider: true, Subdomainizer: true, ConsolidateHttpxRound3: true, NucleiScreenshot: true, Metadata: true, MaxConsolidatedSubdomains: 2500, MaxLiveWebServers: 500,
+			Amass: true, Sublist3r: true, Assetfinder: true, Gau: true, Ctl: true, Subfinder: true, ConsolidateHttpxRound1: true, Shuffledns: true, Cewl: true, ConsolidateHttpxRound2: true, Gospider: true, Subdomainizer: true, ConsolidateHttpxRound3: true, NucleiScreenshot: true, Metadata: true, Nuclei: true, MaxConsolidatedSubdomains: 2500, MaxLiveWebServers: 500,
 		}
 	}
 	log.Printf("[AutoScanConfig] GET: %+v", config)
@@ -863,6 +997,7 @@ func updateAutoScanConfig(w http.ResponseWriter, r *http.Request) {
 		ConsolidateHttpxRound3    bool `json:"consolidate_httpx_round3"`
 		NucleiScreenshot          bool `json:"nuclei_screenshot"`
 		Metadata                  bool `json:"metadata"`
+		Nuclei                    bool `json:"nuclei"`
 		MaxConsolidatedSubdomains int  `json:"maxConsolidatedSubdomains"`
 		MaxLiveWebServers         int  `json:"maxLiveWebServers"`
 	}
@@ -888,8 +1023,9 @@ func updateAutoScanConfig(w http.ResponseWriter, r *http.Request) {
 			consolidate_httpx_round3 = $13,
 			nuclei_screenshot = $14,
 			metadata = $15,
-			max_consolidated_subdomains = $16,
-			max_live_web_servers = $17,
+			nuclei = $16,
+			max_consolidated_subdomains = $17,
+			max_live_web_servers = $18,
 			updated_at = NOW()
 		WHERE id = (SELECT id FROM auto_scan_config LIMIT 1)
 	`,
@@ -908,6 +1044,7 @@ func updateAutoScanConfig(w http.ResponseWriter, r *http.Request) {
 		config.ConsolidateHttpxRound3,
 		config.NucleiScreenshot,
 		config.Metadata,
+		config.Nuclei,
 		config.MaxConsolidatedSubdomains,
 		config.MaxLiveWebServers,
 	)
@@ -3211,6 +3348,107 @@ func saveKatanaCompanyConfig(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 }
 
+func getHttpxConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	scopeTargetID := vars["scope_target_id"]
+
+	if scopeTargetID == "" {
+		http.Error(w, "Missing scope_target_id", http.StatusBadRequest)
+		return
+	}
+
+	var configJSON []byte
+	err := dbPool.QueryRow(context.Background(),
+		`SELECT config FROM httpx_configs WHERE scope_target_id = $1::uuid`, scopeTargetID).Scan(&configJSON)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			var scopeType string
+			typeErr := dbPool.QueryRow(context.Background(),
+				`SELECT type FROM scope_targets WHERE id = $1::uuid`, scopeTargetID).Scan(&scopeType)
+
+			if typeErr == nil && scopeType == "Wildcard" {
+				fallbackErr := dbPool.QueryRow(context.Background(),
+					`SELECT hc.config FROM httpx_configs hc
+					JOIN scope_targets st ON hc.scope_target_id = st.id
+					WHERE st.type = 'Wildcard' AND hc.scope_target_id != $1::uuid
+					ORDER BY hc.created_at DESC LIMIT 1`, scopeTargetID).Scan(&configJSON)
+
+				if fallbackErr == nil {
+					w.Write(configJSON)
+					return
+				}
+			}
+
+			json.NewEncoder(w).Encode(map[string]interface{}{})
+			return
+		}
+		http.Error(w, "Failed to get config", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(configJSON)
+}
+
+func saveHttpxConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	scopeTargetID := vars["scope_target_id"]
+
+	if scopeTargetID == "" {
+		http.Error(w, "Missing scope_target_id", http.StatusBadRequest)
+		return
+	}
+
+	var config map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	configJSON, _ := json.Marshal(config)
+
+	_, err := dbPool.Exec(context.Background(), `
+		INSERT INTO httpx_configs (scope_target_id, config, created_at)
+		VALUES ($1::uuid, $2, NOW())
+		ON CONFLICT (scope_target_id)
+		DO UPDATE SET config = EXCLUDED.config, created_at = NOW()
+	`, scopeTargetID, configJSON)
+
+	if err != nil {
+		http.Error(w, "Failed to save config", http.StatusInternalServerError)
+		return
+	}
+
+	var scopeType string
+	typeErr := dbPool.QueryRow(context.Background(),
+		`SELECT type FROM scope_targets WHERE id = $1::uuid`, scopeTargetID).Scan(&scopeType)
+
+	if typeErr == nil && scopeType == "Wildcard" {
+		rows, queryErr := dbPool.Query(context.Background(),
+			`SELECT id FROM scope_targets WHERE type = 'Wildcard' AND id != $1::uuid`, scopeTargetID)
+		if queryErr == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var otherID string
+				if rows.Scan(&otherID) == nil {
+					_, _ = dbPool.Exec(context.Background(), `
+						INSERT INTO httpx_configs (scope_target_id, config, created_at)
+						VALUES ($1::uuid, $2, NOW())
+						ON CONFLICT (scope_target_id)
+						DO UPDATE SET config = EXCLUDED.config, created_at = NOW()
+					`, otherID, configJSON)
+				}
+			}
+			log.Printf("[INFO] Propagated HTTPX config to all wildcard targets")
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
 // Nuclei Configuration handlers
 func getNucleiConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -3224,17 +3462,65 @@ func getNucleiConfig(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[INFO] Getting Nuclei config for scope target: %s", scopeTargetID)
 
-	var targets, templates, severities []string
-	var uploadedTemplates []byte
+	var targets, templates, severities, templateIDs, excludeIDs, excludeTags []string
+	var uploadedTemplates, advancedConfigJSON []byte
 	var createdAt time.Time
+	var targetMode sql.NullString
 
 	err := dbPool.QueryRow(context.Background(),
-		`SELECT targets, templates, severities, uploaded_templates, created_at FROM nuclei_configs WHERE scope_target_id = $1::uuid ORDER BY created_at DESC LIMIT 1`,
-		scopeTargetID).Scan(&targets, &templates, &severities, &uploadedTemplates, &createdAt)
+		`SELECT targets, templates, severities, uploaded_templates, created_at,
+			COALESCE(target_mode, 'attack_surface'), COALESCE(template_ids, '{}'), 
+			COALESCE(exclude_ids, '{}'), COALESCE(exclude_tags, '{}'), COALESCE(advanced_config, '{}')
+		FROM nuclei_configs WHERE scope_target_id = $1::uuid ORDER BY created_at DESC LIMIT 1`,
+		scopeTargetID).Scan(&targets, &templates, &severities, &uploadedTemplates, &createdAt,
+		&targetMode, &templateIDs, &excludeIDs, &excludeTags, &advancedConfigJSON)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			log.Printf("[INFO] No Nuclei config found for scope target %s", scopeTargetID)
+			log.Printf("[INFO] No Nuclei config found for scope target %s, checking other wildcard targets", scopeTargetID)
+
+			var scopeType string
+			typeErr := dbPool.QueryRow(context.Background(),
+				`SELECT type FROM scope_targets WHERE id = $1::uuid`, scopeTargetID).Scan(&scopeType)
+
+			if typeErr == nil && scopeType == "Wildcard" {
+				fallbackErr := dbPool.QueryRow(context.Background(),
+					`SELECT nc.targets, nc.templates, nc.severities, nc.uploaded_templates, nc.created_at,
+						COALESCE(nc.target_mode, 'attack_surface'), COALESCE(nc.template_ids, '{}'),
+						COALESCE(nc.exclude_ids, '{}'), COALESCE(nc.exclude_tags, '{}'), COALESCE(nc.advanced_config, '{}')
+					FROM nuclei_configs nc
+					JOIN scope_targets st ON nc.scope_target_id = st.id
+					WHERE st.type = 'Wildcard' AND nc.scope_target_id != $1::uuid
+					ORDER BY nc.created_at DESC LIMIT 1`, scopeTargetID).Scan(
+					&targets, &templates, &severities, &uploadedTemplates, &createdAt,
+					&targetMode, &templateIDs, &excludeIDs, &excludeTags, &advancedConfigJSON)
+
+				if fallbackErr == nil {
+					log.Printf("[INFO] Found fallback Nuclei config from another wildcard target")
+					var uploadedTemplatesData []interface{}
+					if len(uploadedTemplates) > 0 {
+						json.Unmarshal(uploadedTemplates, &uploadedTemplatesData)
+					}
+					var advConfig map[string]interface{}
+					if len(advancedConfigJSON) > 0 {
+						json.Unmarshal(advancedConfigJSON, &advConfig)
+					}
+					json.NewEncoder(w).Encode(map[string]interface{}{
+						"targets":            []string{},
+						"templates":          templates,
+						"severities":         severities,
+						"uploaded_templates": uploadedTemplatesData,
+						"created_at":         nil,
+						"target_mode":        targetMode.String,
+						"template_ids":       templateIDs,
+						"exclude_ids":        excludeIDs,
+						"exclude_tags":       excludeTags,
+						"advanced_config":    advConfig,
+					})
+					return
+				}
+			}
+
 			defaultTemplates := []string{"cves", "vulnerabilities", "exposures", "technologies", "misconfiguration", "takeovers", "network", "dns", "headless"}
 			defaultSeverities := []string{"critical", "high", "medium", "low", "info"}
 			json.NewEncoder(w).Encode(map[string]interface{}{
@@ -3243,6 +3529,11 @@ func getNucleiConfig(w http.ResponseWriter, r *http.Request) {
 				"severities":         defaultSeverities,
 				"uploaded_templates": []interface{}{},
 				"created_at":         nil,
+				"target_mode":        "attack_surface",
+				"template_ids":       []string{},
+				"exclude_ids":        []string{},
+				"exclude_tags":       []string{},
+				"advanced_config":    map[string]interface{}{},
 			})
 			return
 		}
@@ -3259,12 +3550,25 @@ func getNucleiConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var advancedConfig map[string]interface{}
+	if len(advancedConfigJSON) > 0 {
+		if err := json.Unmarshal(advancedConfigJSON, &advancedConfig); err != nil {
+			log.Printf("[WARN] Failed to unmarshal advanced config: %v", err)
+			advancedConfig = map[string]interface{}{}
+		}
+	}
+
 	response := map[string]interface{}{
 		"targets":            targets,
 		"templates":          templates,
 		"severities":         severities,
 		"uploaded_templates": uploadedTemplatesData,
 		"created_at":         createdAt,
+		"target_mode":        targetMode.String,
+		"template_ids":       templateIDs,
+		"exclude_ids":        excludeIDs,
+		"exclude_tags":       excludeTags,
+		"advanced_config":    advancedConfig,
 	}
 
 	log.Printf("[INFO] Successfully retrieved Nuclei config for scope target %s", scopeTargetID)
@@ -3282,11 +3586,16 @@ func saveNucleiConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var config struct {
-		Targets           []string      `json:"targets"`
-		Templates         []string      `json:"templates"`
-		Severities        []string      `json:"severities"`
-		UploadedTemplates []interface{} `json:"uploaded_templates"`
-		CreatedAt         string        `json:"created_at"`
+		Targets           []string               `json:"targets"`
+		Templates         []string               `json:"templates"`
+		Severities        []string               `json:"severities"`
+		UploadedTemplates []interface{}           `json:"uploaded_templates"`
+		CreatedAt         string                  `json:"created_at"`
+		TargetMode        string                  `json:"target_mode"`
+		TemplateIDs       []string               `json:"template_ids"`
+		ExcludeIDs        []string               `json:"exclude_ids"`
+		ExcludeTags       []string               `json:"exclude_tags"`
+		AdvancedConfig    map[string]interface{} `json:"advanced_config"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
@@ -3295,22 +3604,35 @@ func saveNucleiConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if config.TargetMode == "" {
+		config.TargetMode = "attack_surface"
+	}
+
 	log.Printf("[INFO] Saving Nuclei config for scope target %s", scopeTargetID)
-	log.Printf("[INFO] Targets: %d, Templates: %d, Uploaded Templates: %d", len(config.Targets), len(config.Templates), len(config.UploadedTemplates))
+	log.Printf("[INFO] Targets: %d, Templates: %d, TemplateIDs: %d, Uploaded Templates: %d, TargetMode: %s",
+		len(config.Targets), len(config.Templates), len(config.TemplateIDs), len(config.UploadedTemplates), config.TargetMode)
 
 	uploadedTemplatesJSON, _ := json.Marshal(config.UploadedTemplates)
+	advancedConfigJSON, _ := json.Marshal(config.AdvancedConfig)
 
 	_, err := dbPool.Exec(context.Background(), `
-		INSERT INTO nuclei_configs (scope_target_id, targets, templates, severities, uploaded_templates, created_at)
-		VALUES ($1::uuid, $2, $3, $4, $5, NOW())
+		INSERT INTO nuclei_configs (scope_target_id, targets, templates, severities, uploaded_templates, 
+			target_mode, template_ids, exclude_ids, exclude_tags, advanced_config, created_at)
+		VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
 		ON CONFLICT (scope_target_id) 
 		DO UPDATE SET 
 			targets = EXCLUDED.targets,
 			templates = EXCLUDED.templates,
 			severities = EXCLUDED.severities,
 			uploaded_templates = EXCLUDED.uploaded_templates,
+			target_mode = EXCLUDED.target_mode,
+			template_ids = EXCLUDED.template_ids,
+			exclude_ids = EXCLUDED.exclude_ids,
+			exclude_tags = EXCLUDED.exclude_tags,
+			advanced_config = EXCLUDED.advanced_config,
 			created_at = NOW()
-	`, scopeTargetID, config.Targets, config.Templates, config.Severities, uploadedTemplatesJSON)
+	`, scopeTargetID, config.Targets, config.Templates, config.Severities, uploadedTemplatesJSON,
+		config.TargetMode, config.TemplateIDs, config.ExcludeIDs, config.ExcludeTags, advancedConfigJSON)
 
 	if err != nil {
 		log.Printf("[ERROR] Failed to save Nuclei config: %v", err)
@@ -3319,6 +3641,44 @@ func saveNucleiConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("[INFO] Successfully saved Nuclei config for scope target %s", scopeTargetID)
+
+	var scopeType string
+	typeErr := dbPool.QueryRow(context.Background(),
+		`SELECT type FROM scope_targets WHERE id = $1::uuid`, scopeTargetID).Scan(&scopeType)
+
+	if typeErr == nil && scopeType == "Wildcard" {
+		rows, queryErr := dbPool.Query(context.Background(),
+			`SELECT id FROM scope_targets WHERE type = 'Wildcard' AND id != $1::uuid`, scopeTargetID)
+		if queryErr == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var otherID string
+				if rows.Scan(&otherID) == nil {
+					_, _ = dbPool.Exec(context.Background(), `
+						INSERT INTO nuclei_configs (scope_target_id, targets, templates, severities, uploaded_templates,
+							target_mode, template_ids, exclude_ids, exclude_tags, advanced_config, created_at)
+						VALUES ($1::uuid, 
+							COALESCE((SELECT targets FROM nuclei_configs WHERE scope_target_id = $1::uuid), '{}'),
+							$2, $3, $4, $5, $6, $7, $8, $9, NOW())
+						ON CONFLICT (scope_target_id)
+						DO UPDATE SET
+							templates = EXCLUDED.templates,
+							severities = EXCLUDED.severities,
+							uploaded_templates = EXCLUDED.uploaded_templates,
+							target_mode = EXCLUDED.target_mode,
+							template_ids = EXCLUDED.template_ids,
+							exclude_ids = EXCLUDED.exclude_ids,
+							exclude_tags = EXCLUDED.exclude_tags,
+							advanced_config = EXCLUDED.advanced_config,
+							created_at = NOW()
+					`, otherID, config.Templates, config.Severities, uploadedTemplatesJSON,
+						config.TargetMode, config.TemplateIDs, config.ExcludeIDs, config.ExcludeTags, advancedConfigJSON)
+				}
+			}
+			log.Printf("[INFO] Propagated Nuclei config settings to all wildcard targets")
+		}
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 }
@@ -3332,8 +3692,6 @@ func getNucleiScansForScopeTarget(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing id parameter", http.StatusBadRequest)
 		return
 	}
-
-	log.Printf("[INFO] Getting Nuclei scans for scope target: %s", scopeTargetID)
 
 	query := `
 		SELECT scan_id, status, targets, templates, result, error, created_at, execution_time
@@ -3376,17 +3734,6 @@ func getNucleiScansForScopeTarget(w http.ResponseWriter, r *http.Request) {
 		scans = append(scans, scan)
 	}
 
-	log.Printf("[INFO] Found %d Nuclei scans for scope target %s", len(scans), scopeTargetID)
-
-	// Debug: Log the first scan's result if it exists
-	if len(scans) > 0 {
-		if result, exists := scans[0]["result"]; exists && result != nil {
-			if resultStr, ok := result.(string); ok && len(resultStr) > 0 {
-				log.Printf("[DEBUG] First scan result (first 500 chars): %s", resultStr[:min(len(resultStr), 500)])
-				log.Printf("[DEBUG] First scan result length: %d", len(resultStr))
-			}
-		}
-	}
 
 	json.NewEncoder(w).Encode(scans)
 }
@@ -3403,12 +3750,16 @@ func startNucleiScan(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[INFO] Starting Nuclei scan for scope target: %s", scopeTargetID)
 
-	// Get the latest Nuclei config for this scope target
-	var targets, templates, severities []string
-	var uploadedTemplatesJSON []byte
+	var targets, templates, severities, templateIDs, excludeIDs, excludeTags []string
+	var uploadedTemplatesJSON, advancedConfigJSON []byte
+	var targetMode sql.NullString
 	err := dbPool.QueryRow(context.Background(),
-		`SELECT targets, templates, severities, uploaded_templates FROM nuclei_configs WHERE scope_target_id = $1::uuid ORDER BY created_at DESC LIMIT 1`,
-		scopeTargetID).Scan(&targets, &templates, &severities, &uploadedTemplatesJSON)
+		`SELECT targets, templates, severities, uploaded_templates, 
+			COALESCE(target_mode, 'attack_surface'), COALESCE(template_ids, '{}'),
+			COALESCE(exclude_ids, '{}'), COALESCE(exclude_tags, '{}'), COALESCE(advanced_config, '{}')
+		FROM nuclei_configs WHERE scope_target_id = $1::uuid ORDER BY created_at DESC LIMIT 1`,
+		scopeTargetID).Scan(&targets, &templates, &severities, &uploadedTemplatesJSON,
+		&targetMode, &templateIDs, &excludeIDs, &excludeTags, &advancedConfigJSON)
 
 	if err != nil {
 		log.Printf("[ERROR] Failed to get Nuclei config: %v", err)
@@ -3421,7 +3772,6 @@ func startNucleiScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse uploaded templates
 	var uploadedTemplates []map[string]interface{}
 	if len(uploadedTemplatesJSON) > 0 {
 		if err := json.Unmarshal(uploadedTemplatesJSON, &uploadedTemplates); err != nil {
@@ -3429,10 +3779,16 @@ func startNucleiScan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Generate scan ID
+	var advancedConfig map[string]interface{}
+	if len(advancedConfigJSON) > 0 {
+		if err := json.Unmarshal(advancedConfigJSON, &advancedConfig); err != nil {
+			log.Printf("[WARN] Failed to parse advanced config: %v", err)
+			advancedConfig = map[string]interface{}{}
+		}
+	}
+
 	scanID := uuid.New().String()
 
-	// Insert scan record with pending status
 	_, err = dbPool.Exec(context.Background(), `
 		INSERT INTO nuclei_scans (scan_id, scope_target_id, targets, templates, status, created_at) 
 		VALUES ($1, $2::uuid, $3, $4, 'pending', NOW())
@@ -3444,11 +3800,14 @@ func startNucleiScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Start scan in background goroutine
-	go func() {
-		log.Printf("[INFO] Starting background Nuclei scan %s", scanID)
+	mode := targetMode.String
+	if mode == "" {
+		mode = "attack_surface"
+	}
 
-		// Update status to running
+	go func() {
+		log.Printf("[INFO] Starting background Nuclei scan %s (target_mode: %s)", scanID, mode)
+
 		_, err := dbPool.Exec(context.Background(), `
 			UPDATE nuclei_scans SET status = 'running', updated_at = NOW() WHERE scan_id = $1
 		`, scanID)
@@ -3460,15 +3819,24 @@ func startNucleiScan(w http.ResponseWriter, r *http.Request) {
 
 		startTime := time.Now()
 
-		// Execute the scan
-		outputFile, findings, err := utils.ExecuteNucleiScanForScopeTarget(scopeTargetID, targets, templates, severities, uploadedTemplates, dbPool)
+		var outputFile string
+		var findings []utils.NucleiFinding
+		var scanErr error
+
+		if mode == "httpx" {
+			outputFile, findings, scanErr = utils.ExecuteNucleiScanDirect(
+				targets, templates, severities, templateIDs, excludeIDs, excludeTags,
+				uploadedTemplates, advancedConfig)
+		} else {
+			outputFile, findings, scanErr = utils.ExecuteNucleiScanForScopeTarget(
+				scopeTargetID, targets, templates, severities, templateIDs, excludeIDs, excludeTags,
+				uploadedTemplates, advancedConfig, dbPool)
+		}
 
 		executionTime := time.Since(startTime)
 
-		if err != nil {
-			log.Printf("[ERROR] Nuclei scan failed: %v", err)
-
-			// Update scan with error status
+		if scanErr != nil {
+			log.Printf("[ERROR] Nuclei scan failed: %v", scanErr)
 			_, updateErr := dbPool.Exec(context.Background(), `
 				UPDATE nuclei_scans SET 
 					status = 'failed', 
@@ -3476,22 +3844,19 @@ func startNucleiScan(w http.ResponseWriter, r *http.Request) {
 					execution_time = $2,
 					updated_at = NOW() 
 				WHERE scan_id = $3
-			`, err.Error(), executionTime.String(), scanID)
-
+			`, scanErr.Error(), executionTime.String(), scanID)
 			if updateErr != nil {
 				log.Printf("[ERROR] Failed to update scan with error: %v", updateErr)
 			}
 			return
 		}
 
-		// Convert findings to JSON
 		findingsJSON, err := json.Marshal(findings)
 		if err != nil {
 			log.Printf("[ERROR] Failed to marshal findings: %v", err)
 			findingsJSON = []byte("[]")
 		}
 
-		// Update scan with success status and results
 		_, err = dbPool.Exec(context.Background(), `
 			UPDATE nuclei_scans SET 
 				status = 'success', 
@@ -3507,13 +3872,11 @@ func startNucleiScan(w http.ResponseWriter, r *http.Request) {
 			log.Printf("[INFO] Nuclei scan %s completed successfully with %d findings", scanID, len(findings))
 		}
 
-		// Clean up output file
 		if outputFile != "" {
 			os.Remove(outputFile)
 		}
 	}()
 
-	// Return scan ID immediately
 	response := map[string]string{
 		"scan_id": scanID,
 		"status":  "pending",
@@ -3564,4 +3927,151 @@ func getNucleiScanStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+var nucleiTemplateCache struct {
+	templates []map[string]interface{}
+	fetchedAt time.Time
+}
+
+func listNucleiTemplates(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if nucleiTemplateCache.templates != nil && time.Since(nucleiTemplateCache.fetchedAt) < 30*time.Minute {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"templates": nucleiTemplateCache.templates,
+			"cached":    true,
+		})
+		return
+	}
+
+	log.Printf("[INFO] Fetching Nuclei template list from container")
+
+	cmd := exec.Command("docker", "exec", "ars0n-framework-v2-nuclei-1", "nuclei", "-tl")
+	output, err := cmd.Output()
+	if err != nil {
+		log.Printf("[ERROR] Failed to list Nuclei templates: %v", err)
+		http.Error(w, "Failed to list templates", http.StatusInternalServerError)
+		return
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	dirMap := make(map[string]int)
+	var templates []map[string]interface{}
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		parts := strings.Split(line, "/")
+		dir := ""
+		if len(parts) > 1 {
+			dir = strings.Join(parts[:len(parts)-1], "/")
+		}
+
+		templateID := strings.TrimSuffix(parts[len(parts)-1], ".yaml")
+		templateID = strings.TrimSuffix(templateID, ".yml")
+
+		templates = append(templates, map[string]interface{}{
+			"id":        templateID,
+			"path":      line,
+			"directory": dir,
+		})
+
+		if dir != "" {
+			dirMap[dir]++
+			for i := 1; i < len(parts)-1; i++ {
+				parentDir := strings.Join(parts[:i+1], "/")
+				if _, exists := dirMap[parentDir]; !exists {
+					dirMap[parentDir] = 0
+				}
+			}
+		}
+	}
+
+	var directories []map[string]interface{}
+	for dir, count := range dirMap {
+		directories = append(directories, map[string]interface{}{
+			"path":  dir,
+			"count": count,
+		})
+	}
+
+	nucleiTemplateCache.templates = templates
+	nucleiTemplateCache.fetchedAt = time.Now()
+
+	log.Printf("[INFO] Found %d Nuclei templates in %d directories", len(templates), len(directories))
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"templates":   templates,
+		"directories": directories,
+		"cached":      false,
+	})
+}
+
+func getWildcardNucleiTargets(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	scopeTargetID := vars["id"]
+
+	if scopeTargetID == "" {
+		http.Error(w, "Missing id parameter", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("[INFO] Getting wildcard Nuclei targets (HTTPX results) for scope target: %s", scopeTargetID)
+
+	var result sql.NullString
+	err := dbPool.QueryRow(context.Background(), `
+		SELECT result FROM httpx_scans 
+		WHERE scope_target_id = $1::uuid AND status = 'success'
+		ORDER BY created_at DESC LIMIT 1
+	`, scopeTargetID).Scan(&result)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"targets": []interface{}{},
+				"count":   0,
+			})
+			return
+		}
+		log.Printf("[ERROR] Failed to get HTTPX results: %v", err)
+		http.Error(w, "Failed to get live web servers", http.StatusInternalServerError)
+		return
+	}
+
+	var targets []map[string]interface{}
+	if result.Valid && result.String != "" {
+		lines := strings.Split(result.String, "\n")
+		for i, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			var httpxResult map[string]interface{}
+			urlStr := line
+			if err := json.Unmarshal([]byte(line), &httpxResult); err == nil {
+				if u, ok := httpxResult["url"].(string); ok && u != "" {
+					urlStr = u
+				}
+			}
+
+			targets = append(targets, map[string]interface{}{
+				"id":               fmt.Sprintf("httpx-%d", i),
+				"url":              urlStr,
+				"asset_type":       "live_web_server",
+				"asset_identifier": urlStr,
+			})
+		}
+	}
+
+	log.Printf("[INFO] Found %d live web server targets for wildcard scope target %s", len(targets), scopeTargetID)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"targets": targets,
+		"count":   len(targets),
+	})
 }

@@ -16,12 +16,12 @@ function AutoScanConfigModal({ show, handleClose, config, onSave, loading: exter
     { id: 'gospider', name: 'GoSpider' },
     { id: 'subdomainizer', name: 'Subdomainizer' },
     { id: 'consolidate_httpx_round3', name: 'Consolidate & Live Web Servers (Round 3)' },
-    { id: 'nuclei_screenshot', name: 'Nuclei Screenshot' },
-    { id: 'metadata', name: 'Metadata' }
+    { id: 'metadata', name: 'Metadata' },
+    { id: 'nuclei', name: 'Nuclei (Vulnerability Scan)' }
   ];
 
   const defaultConfig = {
-    amass: true, sublist3r: true, assetfinder: true, gau: true, ctl: true, subfinder: true, consolidate_httpx_round1: true, shuffledns: true, cewl: true, consolidate_httpx_round2: true, gospider: true, subdomainizer: true, consolidate_httpx_round3: true, nuclei_screenshot: true, metadata: true, maxConsolidatedSubdomains: 2500, maxLiveWebServers: 500
+    amass: true, sublist3r: true, assetfinder: true, gau: true, ctl: true, subfinder: true, consolidate_httpx_round1: true, shuffledns: true, cewl: true, consolidate_httpx_round2: true, gospider: true, subdomainizer: true, consolidate_httpx_round3: true, metadata: true, nuclei: true, maxConsolidatedSubdomains: 2500, maxLiveWebServers: 500
   };
 
   const scanProfiles = {
@@ -47,8 +47,8 @@ function AutoScanConfigModal({ show, handleClose, config, onSave, loading: exter
         gospider: false, 
         subdomainizer: false, 
         consolidate_httpx_round3: false, 
-        nuclei_screenshot: true, 
-        metadata: true
+        metadata: true,
+        nuclei: false
       }
     },
     quickNoReport: {
@@ -68,8 +68,8 @@ function AutoScanConfigModal({ show, handleClose, config, onSave, loading: exter
         gospider: false, 
         subdomainizer: false, 
         consolidate_httpx_round3: false, 
-        nuclei_screenshot: false, 
-        metadata: false
+        metadata: false,
+        nuclei: false
       }
     },
     balanced: {
@@ -89,8 +89,8 @@ function AutoScanConfigModal({ show, handleClose, config, onSave, loading: exter
         gospider: true, 
         subdomainizer: false, 
         consolidate_httpx_round3: true, 
-        nuclei_screenshot: true, 
-        metadata: true
+        metadata: true,
+        nuclei: true
       }
     },
     noAmass: {
@@ -110,8 +110,8 @@ function AutoScanConfigModal({ show, handleClose, config, onSave, loading: exter
         gospider: true, 
         subdomainizer: true, 
         consolidate_httpx_round3: true, 
-        nuclei_screenshot: true, 
-        metadata: true
+        metadata: true,
+        nuclei: true
       }
     },
     noReport: {
@@ -131,8 +131,8 @@ function AutoScanConfigModal({ show, handleClose, config, onSave, loading: exter
         gospider: true, 
         subdomainizer: true, 
         consolidate_httpx_round3: true, 
-        nuclei_screenshot: false, 
-        metadata: false
+        metadata: false,
+        nuclei: true
       }
     }
   };
@@ -199,12 +199,18 @@ function AutoScanConfigModal({ show, handleClose, config, onSave, loading: exter
     setSaveSuccess(false);
     setError(null);
     try {
+      const configToSend = {
+        ...localConfig,
+        nuclei_screenshot: localConfig.metadata,
+        nuclei: localConfig.nuclei !== undefined ? localConfig.nuclei : true
+      };
+      
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_PROTOCOL}://${process.env.REACT_APP_SERVER_IP}:${process.env.REACT_APP_SERVER_PORT}/api/auto-scan-config`,
+        `/api/api/auto-scan-config`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(localConfig)
+          body: JSON.stringify(configToSend)
         }
       );
       if (!response.ok) {
