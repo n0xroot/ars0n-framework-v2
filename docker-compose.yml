@@ -100,7 +100,7 @@ services:
       - ars0n-network
 
   assetfinder:
-    container_name: bb-assetfinder-1
+    container_name: Assetfinder
     build: ./docker/assetfinder
     depends_on:
       - api
@@ -110,7 +110,7 @@ services:
       - ars0n-network
 
   metabigor:
-    container_name: bb-metabigor-1
+    container_name: Metabigor
     build: ./docker/metabigor
     depends_on:
       - api
@@ -120,7 +120,7 @@ services:
       - ars0n-network
 
   sublist3r:
-    container_name: bb-sublist3r-1
+    container_name: sublist3r
     build: ./docker/sublist3r
     depends_on:
       - api
@@ -130,7 +130,7 @@ services:
       - ars0n-network
 
   subfinder:
-    container_name: bb-subfinder-1
+    container_name: Subfinder
     build: ./docker/subfinder
     depends_on:
       - api
@@ -140,7 +140,7 @@ services:
       - ars0n-network
 
   shuffledns:
-    container_name: bb-shuffledns-1
+    container_name: Shuffledns
     build: ./docker/shuffledns
     volumes:
       - ./docker/shuffledns/wordlists:/app/wordlists
@@ -152,7 +152,7 @@ services:
       - ars0n-network
 
   cewl:
-    container_name: bb-cewl-1
+    container_name: Cewl
     build: ./docker/cewl
     depends_on:
       - api
@@ -162,7 +162,7 @@ services:
       - ars0n-network
 
   gospider:
-    container_name: bb-gospider-1
+    container_name: Gospider
     build:
       context: .
       dockerfile: docker/gospider/Dockerfile
@@ -182,7 +182,7 @@ services:
       - ars0n-network
 
   subdomainizer:
-    container_name: bb-subdomainizer-1
+    container_name: Subdomainizer
     build:
       context: .
       dockerfile: docker/subdomainizer/Dockerfile
@@ -194,7 +194,7 @@ services:
       - ars0n-network
 
   nuclei:
-    container_name: bb-nuclei-1
+    container_name: Nuclei
     build: ./docker/nuclei
     depends_on:
       - api
@@ -207,7 +207,7 @@ services:
       - ars0n-network
 
   katana:
-    container_name: bb-katana-1
+    container_name: Katana
     build:
       context: ./docker/katana
       dockerfile: Dockerfile
@@ -227,7 +227,7 @@ services:
       - ars0n-network
 
   httpx:
-    container_name: bb-httpx-1
+    container_name: Httpx
     build: ./docker/httpx
     depends_on:
       - api
@@ -239,7 +239,7 @@ services:
       - ars0n-network
 
   dnsx:
-    container_name: bb-dnsx-1
+    container_name: Dnsx
     build: ./docker/dnsx
     depends_on:
       - api
@@ -249,7 +249,7 @@ services:
       - ars0n-network
 
   ffuf:
-    container_name: bb-ffuf-1
+    container_name: Ffuf
     build: ./docker/ffuf
     depends_on:
       - api
@@ -262,7 +262,7 @@ services:
       - ars0n-network
 
   github-recon:
-    container_name: bb-recon-1
+    container_name: Recon
     build: ./docker/github-recon
     depends_on:
       - api
@@ -272,7 +272,7 @@ services:
       - ars0n-network
 
   cloud_enum:
-    container_name: bb-cloud_enum-1
+    container_name: CloudEnum
     build:
       context: .
       dockerfile: docker/cloud_enum/Dockerfile
@@ -284,7 +284,7 @@ services:
       - ars0n-network
 
   linkfinder:
-    container_name: bb-linkfinder-1
+    container_name: Linkfinder
     build: ./docker/linkfinder
     depends_on:
       - api
@@ -294,7 +294,7 @@ services:
       - ars0n-network
 
   waybackurls:
-    container_name: bb-waybackurls-1
+    container_name: Waybackurls
     build: ./docker/waybackurls
     depends_on:
       - api
@@ -304,7 +304,7 @@ services:
       - ars0n-network
 
   arjun:
-    container_name: ars0n-framework-v2-arjun-1
+    container_name: Arjun
     build: ./docker/arjun
     depends_on:
       - api
@@ -316,7 +316,7 @@ services:
       - ars0n-network
 
   parameth:
-    container_name: ars0n-framework-v2-parameth-1
+    container_name: Parameth
     build: ./docker/parameth
     depends_on:
       - api
@@ -328,7 +328,7 @@ services:
       - ars0n-network
 
   x8:
-    container_name: ars0n-framework-v2-x8-1
+    container_name: X8
     build: ./docker/x8
     depends_on:
       - api
